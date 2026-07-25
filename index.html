@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#111827" />
+  <title>TankWar V4</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <section id="lobby" class="screen active">
+      <div class="hero">
+        <div class="logoWrap">
+          <img src="tank_player.svg" class="heroTank" alt="tank"/>
+          <div>
+            <h1>TANK WAR</h1>
+            <p>V4 COMPLETE</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="statsRow">
+            <div><span>金币</span><b id="lobbyCoins">0</b></div>
+            <div><span>等级</span><b id="lobbyLevel">1</b></div>
+            <div><span>最高波次</span><b id="bestWave">1</b></div>
+          </div>
+          <button id="startBtn" class="primary">开始战斗</button>
+          <button id="upgradeBtn" class="secondary">坦克升级</button>
+          <button id="resetBtn" class="ghost">重置存档</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="upgradeScreen" class="screen">
+      <div class="topbar">
+        <button id="backLobby">←</button>
+        <h2>坦克升级</h2>
+        <div>金币 <b id="upgradeCoins">0</b></div>
+      </div>
+      <div class="upgradeGrid">
+        <div class="upgradeCard">
+          <h3>装甲</h3><p>提高最大生命值</p>
+          <div class="meter"><i id="armorMeter"></i></div>
+          <button data-upgrade="armor">升级 <span id="armorCost"></span></button>
+        </div>
+        <div class="upgradeCard">
+          <h3>火力</h3><p>提高炮弹伤害</p>
+          <div class="meter"><i id="damageMeter"></i></div>
+          <button data-upgrade="damage">升级 <span id="damageCost"></span></button>
+        </div>
+        <div class="upgradeCard">
+          <h3>射速</h3><p>缩短开炮间隔</p>
+          <div class="meter"><i id="reloadMeter"></i></div>
+          <button data-upgrade="reload">升级 <span id="reloadCost"></span></button>
+        </div>
+        <div class="upgradeCard">
+          <h3>引擎</h3><p>提高移动速度</p>
+          <div class="meter"><i id="speedMeter"></i></div>
+          <button data-upgrade="speed">升级 <span id="speedCost"></span></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen">
+      <div id="hud">
+        <div class="hudLeft">
+          <div class="bar"><i id="hpBar"></i></div>
+          <span id="hpText">100/100</span>
+        </div>
+        <div class="hudCenter">
+          <b>WAVE <span id="waveText">1</span></b>
+          <small>敌军 <span id="enemyCount">0</span></small>
+        </div>
+        <div class="hudRight">
+          <span>🪙 <b id="coinsText">0</b></span>
+          <button id="pauseBtn">Ⅱ</button>
+        </div>
+      </div>
+
+      <canvas id="game"></canvas>
+
+      <div id="touchUI">
+        <div id="joystick"><div id="stick"></div></div>
+        <button id="fireBtn">FIRE</button>
+      </div>
+
+      <div id="pausePanel" class="overlay hidden">
+        <div class="dialog">
+          <h2>暂停</h2>
+          <button id="resumeBtn" class="primary">继续</button>
+          <button id="quitBtn" class="secondary">返回大厅</button>
+        </div>
+      </div>
+
+      <div id="gameOverPanel" class="overlay hidden">
+        <div class="dialog">
+          <h2>战斗结束</h2>
+          <p>到达波次：<b id="resultWave">1</b></p>
+          <p>本局金币：<b id="resultCoins">0</b></p>
+          <button id="retryBtn" class="primary">再来一局</button>
+          <button id="resultLobbyBtn" class="secondary">返回大厅</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
