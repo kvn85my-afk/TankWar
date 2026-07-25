@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TankWar</title>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      font-family: Arial, sans-serif;
+    }
+
+    #ui {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      color: white;
+      z-index: 10;
+      font-size: 18px;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    #fireBtn {
+      position: fixed;
+      right: 25px;
+      bottom: 35px;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      border: 4px solid white;
+      background: rgba(255, 60, 40, 0.8);
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+      z-index: 10;
+    }
+
+    #controls {
+      position: fixed;
+      left: 20px;
+      bottom: 25px;
+      z-index: 10;
+    }
+
+    .ctrl {
+      width: 65px;
+      height: 65px;
+      margin: 3px;
+      font-size: 28px;
+      border-radius: 12px;
+      border: 2px solid white;
+      background: rgba(0,0,0,0.45);
+      color: white;
+    }
+
+    #row2 {
+      display: flex;
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="ui">
+  HP: <span id="hp">100</span><br>
+  敌人: <span id="enemyCount">3</span>
+</div>
+
+<div id="controls">
+  <div style="text-align:center;">
+    <button class="ctrl" id="up">▲</button>
+  </div>
+
+  <div id="row2">
+    <button class="ctrl" id="left">◀</button>
+    <button class="ctrl" id="down">▼</button>
+    <button class="ctrl" id="right">▶</button>
+  </div>
+</div>
+
+<button id="fireBtn">FIRE</button>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87b8d8);
+
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.body.appendChild(renderer.domElement);
+
+// 灯光
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(10, 20, 10);
+scene.add(light);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+
+// 地面
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshStandardMaterial({ color: 0x657a45 })
+);
+
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// 创建坦克
+function createTank(color = 0x355c2d) {
+
+  const tank = new THREE.Group();
+
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(3.5, 1, 5),
+    new THREE.MeshStandardMaterial({ color })
+  );
+
+  body.position.y = 0.8;
+  body.castShadow = true;
+  tank.add(body);
+
+  const turret = new THREE.Group();
+
+  const turretBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.2, 1.4, 0.8, 16),
+    new THREE.MeshStandardMaterial({ color })
+  );
+
+  turretBase.position.y = 1.6;
+  turret.add(turretBase);
+
+  const barrel = new THREE.Mesh(
+    new THREE.BoxGeometry(0.35, 0.35, 4),
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
+  );
+
+  barrel.position.set(0, 1.7, -2.3);
+  turret.add(barrel);
+
+  tank.add(turret);
+
+  tank.userData.turret = turret;
+
+  return tank;
+}
+
+// 玩家坦克
+const player = createTank(0x315c2b);
+player.position.set(0, 0, 10);
+scene.add(player);
+
+// 敌人
+const enemies = [];
+
+for (let i = 0; i < 3; i++) {
+
+  const enemy = createTank(0x8b2e22);
+
+  enemy.position.set(
+    -10 + i * 10,
+    0,
+    -15
+  );
+
+  scene.add(enemy);
+  enemies.push(enemy);
+}
+
+// 摄像机
+camera.position.set(0, 10, 18);
+camera.lookAt(player.position);
+
+// 控制状态
+const keys = {
+  up:false,
+  down:false,
+  left:false,
+  right:false
+};
+
+function bindButton(id, key) {
+
+  const btn = document.getElementById(id);
+
+  btn.addEventListener("touchstart", e => {
+    e.preventDefault();
+    keys[key] = true;
+  });
+
+  btn.addEventListener("touchend", e => {
+    e.preventDefault();
+    keys[key] = false;
+  });
+
+  btn.addEventListener("mousedown", () => {
+    keys[key] = true;
+  });
+
+  btn.addEventListener("mouseup", () => {
+    keys[key] = false;
+  });
+}
+
+bindButton("up","up");
+bindButton("down","down");
+bindButton("left","left");
+bindButton("right","right");
+
+// 子弹
+const bullets = [];
+
+function fire() {
+
+  const bullet = new THREE.Mesh(
+    new THREE.SphereGeometry(0.25, 12, 12),
+    new THREE.MeshStandardMaterial({
+      color: 0xffcc00,
+      emissive: 0xff8800
+    })
+  );
+
+  const direction = new THREE.Vector3(
+    Math.sin(player.rotation.y),
+    0,
+    -Math.cos(player.rotation.y)
+  );
+
+  bullet.position.copy(player.position);
+  bullet.position.y = 1.8;
+  bullet.position.add(direction.clone().multiplyScalar(3));
+
+  bullet.userData.direction = direction;
+
+  scene.add(bullet);
+  bullets.push(bullet);
+}
+
+document.getElementById("fireBtn")
+.addEventListener("click", fire);
+
+document.getElementById("fireBtn")
+.addEventListener("touchstart", e => {
+  e.preventDefault();
+  fire();
+});
+
+// 爆炸效果
+function explosion(position) {
+
+  for (let i = 0; i < 12; i++) {
+
+    const particle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15),
+      new THREE.MeshBasicMaterial({
+        color: Math.random() > 0.5
+          ? 0xff5500
+          : 0xffcc00
+      })
+    );
+
+    particle.position.copy(position);
+
+    particle.userData.velocity = new THREE.Vector3(
+      (Math.random()-0.5)*0.3,
+      Math.random()*0.3,
+      (Math.random()-0.5)*0.3
+    );
+
+    scene.add(particle);
+
+    setTimeout(() => {
+      scene.remove(particle);
+    }, 600);
+  }
+}
+
+// 动画
+function animate() {
+
+  requestAnimationFrame(animate);
+
+  const speed = 0.15;
+
+  if (keys.left)
+    player.rotation.y += 0.04;
+
+  if (keys.right)
+    player.rotation.y -= 0.04;
+
+  const direction = new THREE.Vector3(
+    Math.sin(player.rotation.y),
+    0,
+    -Math.cos(player.rotation.y)
+  );
+
+  if (keys.up)
+    player.position.add(direction.clone().multiplyScalar(speed));
+
+  if (keys.down)
+    player.position.add(direction.clone().multiplyScalar(-speed));
+
+  // 子弹移动
+  for (let i = bullets.length - 1; i >= 0; i--) {
+
+    const bullet = bullets[i];
+
+    bullet.position.add(
+      bullet.userData.direction
+        .clone()
+        .multiplyScalar(0.5)
+    );
+
+    // 碰撞敌人
+    for (let j = enemies.length - 1; j >= 0; j--) {
+
+      const enemy = enemies[j];
+
+      if (
+        bullet.position.distanceTo(enemy.position)
+        < 2
+      ) {
+
+        explosion(enemy.position);
+
+        scene.remove(enemy);
+        scene.remove(bullet);
+
+        enemies.splice(j,1);
+        bullets.splice(i,1);
+
+        document.getElementById("enemyCount")
+          .innerText = enemies.length;
+
+        break;
+      }
+    }
+
+    if (
+      bullet &&
+      bullet.position.length() > 150
+    ) {
+
+      scene.remove(bullet);
+      bullets.splice(i,1);
+    }
+  }
+
+  // 摄像机跟随
+  const cameraOffset = new THREE.Vector3(
+    0,
+    9,
+    15
+  );
+
+  camera.position.lerp(
+    player.position.clone().add(cameraOffset),
+    0.08
+  );
+
+  camera.lookAt(
+    player.position.x,
+    player.position.y + 1,
+    player.position.z
+  );
+
+  renderer.render(scene, camera);
+}
+
+animate();
+
+window.addEventListener("resize", () => {
+
+  camera.aspect =
+    window.innerWidth / window.innerHeight;
+
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+  );
+});
+
+</script>
+
+</body>
+</html>
