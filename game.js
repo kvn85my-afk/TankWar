@@ -1,5 +1,5 @@
 (()=>{const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const KEY='tw_ultimate_4';let saveData;try{saveData=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}saveData=saveData||{coins:0,level:1,best:1,u:{armor:0,damage:0,reload:0,speed:0,repair:0}};saveData.u={armor:0,damage:0,reload:0,speed:0,repair:0,...saveData.u};
+const KEY='tw_ultimate_5';let saveData;try{saveData=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}saveData=saveData||{coins:0,level:1,best:1,u:{armor:0,damage:0,reload:0,speed:0,repair:0}};saveData.u={armor:0,damage:0,reload:0,speed:0,repair:0,...saveData.u};
 const menu=$('#menu'),garage=$('#garage'),battle=$('#battle'),canvas=$('#game'),ctx=canvas.getContext('2d');
 let W,H,dpr=1,raf=0,last=0,paused=false,over=false,wave=1,runCoins=0,player,enemies=[],bullets=[],particles=[],wrecks=[],obstacles=[],joy={x:0,y:0},firing=false,boss=null,repairCd=0,shake=0;
 function store(){localStorage.setItem(KEY,JSON.stringify(saveData));menuUI()}
@@ -29,15 +29,46 @@ function hud(){$('#hpBar').style.width=Math.max(0,player.hp/player.max*100)+'%';
 function finish(){over=true;saveData.coins+=runCoins;saveData.best=Math.max(saveData.best,wave);store();openModal('战斗结束',`到达 Wave ${wave} · 获得 🪙 ${runCoins}`,'再来一局',()=>{closeModal();start()})}
 function openModal(t,d,b,fn){paused=true;$('#modalTitle').textContent=t;$('#modalText').textContent=d;$('#modalMain').textContent=b;$('#modalMain').onclick=fn;$('#modal').classList.remove('hidden')}function closeModal(){$('#modal').classList.add('hidden')}
 function toast(s){let e=$('#toast');e.textContent=s;setTimeout(()=>{if(e.textContent===s)e.textContent=''},1100)}
-function draw(){ctx.save();if(shake)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);let g=ctx.createLinearGradient(0,70,0,H);g.addColorStop(0,'#5a7647');g.addColorStop(.5,'#3e633c');g.addColorStop(1,'#29452f');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-// MOBA-like visual map only: curved lanes, grass, ruins, rocks
-ctx.globalAlpha=.5;ctx.strokeStyle='#8c7650';ctx.lineWidth=Math.max(72,W*.18);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(W*.18,H*.18);ctx.bezierCurveTo(W*.72,H*.27,W*.24,H*.56,W*.76,H*.82);ctx.stroke();ctx.globalAlpha=1;
-for(let i=0;i<80;i++){let px=(i*89+31)%W,py=90+(i*137)%Math.max(120,H-250);ctx.fillStyle=i%5?'#496d3c':'#2f5332';ctx.beginPath();ctx.arc(px,py,2+i%4,0,7);ctx.fill()}
-obstacles.forEach((w,i)=>{ctx.shadowColor='#0008';ctx.shadowBlur=10;ctx.shadowOffsetY=6;ctx.fillStyle=w.type==='rock'?'#62625b':w.type==='ruin'?'#6d675a':'#7a715c';ctx.fillRect(w.x,w.y,w.w,w.h);ctx.shadowBlur=0;ctx.shadowOffsetY=0;ctx.strokeStyle='#a59b82';ctx.strokeRect(w.x,w.y,w.w,w.h)});
-wrecks.forEach(w=>{ctx.save();ctx.translate(w.x,w.y);ctx.rotate(w.a);ctx.globalAlpha=.45;ctx.fillStyle='#1e211d';ctx.fillRect(-20,-14,40,28);ctx.restore()});
-enemies.forEach(e=>tank(e,true));tank(player,false);bullets.forEach(b=>{ctx.strokeStyle=b.f?'#ffe56c':'#ff725e';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x-b.vx*2,b.y-b.vy*2);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.fillStyle='#fff2a8';ctx.beginPath();ctx.arc(b.x,b.y,3.5,0,7);ctx.fill()});particles.forEach(p=>{ctx.globalAlpha=Math.min(1,p.life/300);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=7;ctx.beginPath();ctx.arc(p.x,p.y,2.5,0,7);ctx.fill();ctx.shadowBlur=0});ctx.globalAlpha=1;ctx.restore()}
-function tank(o,enemy){let bossy=o.type==='boss',sc=bossy?1.35:1,a=o===player?o.a:o.a;ctx.save();ctx.translate(o.x,o.y);ctx.rotate(a);ctx.shadowColor='#0009';ctx.shadowBlur=8;ctx.shadowOffsetY=5;ctx.fillStyle=enemy?'#432020':'#1e3522';ctx.fillRect(-23*sc,-17*sc,46*sc,9*sc);ctx.fillRect(-23*sc,8*sc,46*sc,9*sc);ctx.fillStyle=enemy?(bossy?'#8f302b':'#a4473c'):'#5c8b50';ctx.fillRect(-17*sc,-12*sc,34*sc,24*sc);ctx.shadowBlur=0;ctx.shadowOffsetY=0;ctx.restore();let ta=o===player?o.t:o.a;ctx.save();ctx.translate(o.x,o.y);ctx.rotate(ta);ctx.fillStyle='#c6c1a9';ctx.fillRect(0,-3*sc,31*sc,6*sc);ctx.fillStyle=enemy?'#b84b3e':'#6f9c5d';ctx.beginPath();ctx.arc(0,0,10*sc,0,7);ctx.fill();ctx.restore();if(enemy){ctx.fillStyle='#321619';ctx.fillRect(o.x-22,o.y-o.r-12,44,5);ctx.fillStyle=bossy?'#ffb13c':'#ef4d48';ctx.fillRect(o.x-22,o.y-o.r-12,44*Math.max(0,o.hp/o.max),5)}}
-let J=$('#joy'),stick=J.querySelector('i'),jid=null;function moveJoy(X,Y){let r=J.getBoundingClientRect(),dx=X-(r.left+r.width/2),dy=Y-(r.top+r.height/2),m=Math.hypot(dx,dy),lim=42;if(m>lim){dx=dx/m*lim;dy=dy/m*lim}joy.x=dx/lim;joy.y=dy/lim;stick.style.transform=`translate(${dx}px,${dy}px)`}J.onpointerdown=e=>{jid=e.pointerId;J.setPointerCapture(jid);moveJoy(e.clientX,e.clientY)};J.onpointermove=e=>{if(e.pointerId===jid)moveJoy(e.clientX,e.clientY)};J.onpointerup=J.onpointercancel=e=>{if(jid===null||e.pointerId===jid){jid=null;joy.x=joy.y=0;stick.style.transform=''}};
+function draw(){
+ctx.save();if(shake)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+let g=ctx.createLinearGradient(0,70,W,H);g.addColorStop(0,'#61764a');g.addColorStop(.48,'#405c37');g.addColorStop(1,'#253b2a');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+// dirt lane with layered edges
+ctx.lineCap='round';ctx.globalAlpha=.28;ctx.strokeStyle='#1b291d';ctx.lineWidth=Math.max(104,W*.27);ctx.beginPath();ctx.moveTo(W*.10,H*.16);ctx.bezierCurveTo(W*.88,H*.28,W*.13,H*.57,W*.83,H*.84);ctx.stroke();
+ctx.globalAlpha=.95;ctx.strokeStyle='#817257';ctx.lineWidth=Math.max(78,W*.20);ctx.beginPath();ctx.moveTo(W*.10,H*.16);ctx.bezierCurveTo(W*.88,H*.28,W*.13,H*.57,W*.83,H*.84);ctx.stroke();
+ctx.globalAlpha=.22;ctx.strokeStyle='#c0a97c';ctx.lineWidth=Math.max(46,W*.12);ctx.stroke();ctx.globalAlpha=1;
+// deterministic grass, stones, scorch marks
+for(let i=0;i<110;i++){let px=(i*83+17)%W,py=90+(i*149)%Math.max(130,H-250),r=1+(i%4);ctx.fillStyle=i%7===0?'#263d2b':i%5===0?'#6d7451':'#355a34';ctx.beginPath();ctx.arc(px,py,r,0,7);ctx.fill()}
+for(let i=0;i<14;i++){let px=(i*157+53)%W,py=105+(i*211)%Math.max(150,H-280);ctx.globalAlpha=.12;ctx.fillStyle='#080b08';ctx.beginPath();ctx.ellipse(px,py,13+i%9,6+i%5,(i*.7)%3,0,7);ctx.fill()}ctx.globalAlpha=1;
+// obstacles with depth and cracks
+obstacles.forEach((w,i)=>{ctx.save();ctx.shadowColor='#0009';ctx.shadowBlur=13;ctx.shadowOffsetY=8;
+let og=ctx.createLinearGradient(w.x,w.y,w.x+w.w,w.y+w.h);og.addColorStop(0,w.type==='rock'?'#77766c':'#847b67');og.addColorStop(1,w.type==='rock'?'#474b47':'#514b40');ctx.fillStyle=og;
+if(w.type==='rock'){ctx.beginPath();ctx.moveTo(w.x+7,w.y);ctx.lineTo(w.x+w.w-8,w.y+4);ctx.lineTo(w.x+w.w,w.y+w.h*.55);ctx.lineTo(w.x+w.w-10,w.y+w.h);ctx.lineTo(w.x+4,w.y+w.h-5);ctx.lineTo(w.x,w.y+9);ctx.closePath();ctx.fill()}
+else ctx.fillRect(w.x,w.y,w.w,w.h);ctx.shadowBlur=0;ctx.shadowOffsetY=0;ctx.strokeStyle='#b0a78d';ctx.globalAlpha=.55;ctx.strokeRect(w.x+2,w.y+2,w.w-4,w.h-4);
+ctx.strokeStyle='#282a25';ctx.globalAlpha=.55;ctx.beginPath();ctx.moveTo(w.x+w.w*.2,w.y+w.h*.2);ctx.lineTo(w.x+w.w*.48,w.y+w.h*.55);ctx.lineTo(w.x+w.w*.72,w.y+w.h*.35);ctx.stroke();ctx.restore()});
+// wreck shadows
+wrecks.forEach(w=>{ctx.save();ctx.translate(w.x,w.y);ctx.rotate(w.a);ctx.globalAlpha=.42;ctx.fillStyle='#111713';ctx.fillRect(-23,-16,46,32);ctx.fillStyle='#40251e';ctx.fillRect(-15,-11,30,22);ctx.restore()});
+enemies.forEach(e=>tank(e,true));tank(player,false);
+// projectiles
+bullets.forEach(b=>{ctx.strokeStyle=b.f?'#fff19a':'#ff6d58';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=9;ctx.lineWidth=b.f?3.2:2.7;ctx.beginPath();ctx.moveTo(b.x-b.vx*3.5,b.y-b.vy*3.5);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.fillStyle='#fffbd4';ctx.beginPath();ctx.arc(b.x,b.y,3.5,0,7);ctx.fill();ctx.shadowBlur=0});
+particles.forEach(p=>{ctx.globalAlpha=Math.min(1,p.life/260);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=11;ctx.beginPath();ctx.arc(p.x,p.y,2.5+Math.min(3,p.life/220),0,7);ctx.fill();ctx.shadowBlur=0});
+ctx.globalAlpha=1;ctx.restore()}
+function tank(o,enemy){
+let bossy=o.type==='boss',sc=bossy?1.38:(o.type==='heavy'?1.12:1),a=o.a;
+ctx.save();ctx.translate(o.x,o.y);ctx.rotate(a);ctx.shadowColor='#000b';ctx.shadowBlur=9;ctx.shadowOffsetY=6;
+// tracks
+ctx.fillStyle='#202622';ctx.fillRect(-24*sc,-18*sc,48*sc,8*sc);ctx.fillRect(-24*sc,10*sc,48*sc,8*sc);
+ctx.strokeStyle='#596058';ctx.lineWidth=1;for(let k=-18;k<=18;k+=8){ctx.beginPath();ctx.moveTo(k*sc,-18*sc);ctx.lineTo(k*sc,-10*sc);ctx.moveTo(k*sc,10*sc);ctx.lineTo(k*sc,18*sc);ctx.stroke()}
+// hull
+let hg=ctx.createLinearGradient(-18,-13,18,13);hg.addColorStop(0,enemy?(bossy?'#6f211f':'#7e302b'):'#315f48');hg.addColorStop(.5,enemy?(bossy?'#c34635':'#b64c3e'):'#64a06a');hg.addColorStop(1,enemy?'#52201e':'#244b39');ctx.fillStyle=hg;
+ctx.beginPath();ctx.moveTo(-19*sc,-12*sc);ctx.lineTo(15*sc,-12*sc);ctx.lineTo(21*sc,-7*sc);ctx.lineTo(21*sc,7*sc);ctx.lineTo(15*sc,12*sc);ctx.lineTo(-19*sc,12*sc);ctx.closePath();ctx.fill();
+ctx.shadowBlur=0;ctx.shadowOffsetY=0;ctx.strokeStyle='#ffffff32';ctx.stroke();
+// engine deck
+ctx.fillStyle='#1118';ctx.fillRect(-16*sc,-7*sc,8*sc,14*sc);ctx.restore();
+// turret independently aims for player
+let ta=o===player?o.t:o.a;ctx.save();ctx.translate(o.x,o.y);ctx.rotate(ta);ctx.shadowColor='#0009';ctx.shadowBlur=5;
+ctx.fillStyle=enemy?(bossy?'#d0523c':'#a83e35'):'#57955f';ctx.beginPath();ctx.ellipse(0,0,12*sc,10*sc,0,0,7);ctx.fill();ctx.fillStyle='#c9c3aa';ctx.fillRect(4*sc,-3*sc,30*sc,6*sc);ctx.fillStyle='#222';ctx.fillRect(31*sc,-3.4*sc,5*sc,6.8*sc);ctx.restore();
+if(enemy){ctx.fillStyle='#321619';ctx.fillRect(o.x-23,o.y-o.r-14,46,6);ctx.fillStyle=bossy?'#ffb23f':'#ef4b45';ctx.fillRect(o.x-23,o.y-o.r-14,46*Math.max(0,o.hp/o.max),6)}
+}let J=$('#joy'),stick=J.querySelector('i'),jid=null;function moveJoy(X,Y){let r=J.getBoundingClientRect(),dx=X-(r.left+r.width/2),dy=Y-(r.top+r.height/2),m=Math.hypot(dx,dy),lim=42;if(m>lim){dx=dx/m*lim;dy=dy/m*lim}joy.x=dx/lim;joy.y=dy/lim;stick.style.transform=`translate(${dx}px,${dy}px)`}J.onpointerdown=e=>{jid=e.pointerId;J.setPointerCapture(jid);moveJoy(e.clientX,e.clientY)};J.onpointermove=e=>{if(e.pointerId===jid)moveJoy(e.clientX,e.clientY)};J.onpointerup=J.onpointercancel=e=>{if(jid===null||e.pointerId===jid){jid=null;joy.x=joy.y=0;stick.style.transform=''}};
 let F=$('#fire');F.onpointerdown=e=>{firing=true;F.setPointerCapture(e.pointerId)};F.onpointerup=F.onpointercancel=()=>firing=false;
 $('#skill').onclick=()=>{if(repairCd>0||!player)return;let s=stats();player.hp=Math.min(player.max,player.hp+s.repair);repairCd=8000;toast('维修 +'+s.repair);hud()};
 menuUI();show(menu);
