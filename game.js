@@ -34,8 +34,54 @@ function update(){
  if(player.hp<=0){running=false;save.best=Math.max(save.best,wave);persist();$('#message').textContent='战车被摧毁';setTimeout(()=>{game.classList.add('hidden');menu.classList.remove('hidden');$('#message').textContent=''},1400)}
  if(enemies.length===0&&running){wave++;save.best=Math.max(save.best,wave);if(wave%3===0){save.level++;player.hp=Math.min(player.max,player.hp+30)}persist();spawnWave()}
 }
-function tank(t,enemy=false){ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.a+Math.PI/2);let boss=t.boss;ctx.fillStyle=enemy?(boss?'#78191c':'#9c292d'):'#397c3e';ctx.fillRect(-boss*8-17,-25-boss*8,boss?50:34,boss?66:50);ctx.fillStyle=enemy?'#d53b40':'#6baa57';ctx.fillRect(-13,-18,26,34);ctx.fillStyle='#ddd';ctx.fillRect(-4,-42,8,30);ctx.restore();if(enemy){ctx.fillStyle='#431a1d';ctx.fillRect(t.x-25,t.y-34,50,5);ctx.fillStyle='#ff4650';ctx.fillRect(t.x-25,t.y-34,50*Math.max(0,t.hp/t.max),5)}}
-function draw(){ctx.clearRect(0,0,W,H);let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#244d28');g.addColorStop(1,'#102f1b');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);ctx.globalAlpha=.12;ctx.strokeStyle='#b7d79f';for(let x=0;x<W;x+=55){ctx.beginPath();ctx.moveTo(x,90);ctx.lineTo(x,H);ctx.stroke()}for(let y=110;y<H;y+=55){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}ctx.globalAlpha=1;
- [[55,H*.43,125,50],[W*.66,H*.49,150,48],[W*.38,H*.62,50,150]].forEach(o=>{ctx.fillStyle='#665941';ctx.fillRect(...o);ctx.strokeStyle='#9c8b65';ctx.strokeRect(...o)});
- enemies.forEach(e=>tank(e,true));tank(player,false);ctx.fillStyle='#ffe66a';bullets.forEach(b=>{ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill()});ctx.fillStyle='#ff9d63';enemyBullets.forEach(b=>{ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill()});particles.forEach(p=>{ctx.globalAlpha=Math.min(1,p.l/15);ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,4,4)});ctx.globalAlpha=1}
+function tank(t,enemy=false){
+ ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.a+Math.PI/2);
+ let boss=t.boss, sc=boss?1.35:1;
+ ctx.shadowColor='#000';ctx.shadowBlur=10;ctx.shadowOffsetY=7;
+ ctx.fillStyle='#182018';
+ ctx.fillRect(-24*sc,-25*sc,10*sc,50*sc);ctx.fillRect(14*sc,-25*sc,10*sc,50*sc);
+ ctx.shadowBlur=0;ctx.shadowOffsetY=0;
+ ctx.fillStyle=enemy?(boss?'#681c20':'#8f3030'):'#356b3d';
+ ctx.fillRect(-17*sc,-23*sc,34*sc,46*sc);
+ ctx.fillStyle=enemy?(boss?'#a33132':'#bd4945'):'#5d9a55';
+ ctx.fillRect(-13*sc,-17*sc,26*sc,30*sc);
+ ctx.fillStyle='#ffffff18';ctx.fillRect(-10*sc,-14*sc,5*sc,23*sc);
+ ctx.restore();
+
+ ctx.save();ctx.translate(t.x,t.y);ctx.rotate(t.a+Math.PI/2);
+ ctx.fillStyle=enemy?'#b4a69b':'#b9c6a4';ctx.fillRect(-3.5*sc,-43*sc,7*sc,35*sc);
+ ctx.fillStyle=enemy?(boss?'#8c292b':'#a63b3a'):'#4d8449';
+ ctx.beginPath();ctx.arc(0,-5*sc,11*sc,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#1b241b';ctx.beginPath();ctx.arc(0,-5*sc,4*sc,0,Math.PI*2);ctx.fill();
+ ctx.restore();
+
+ if(enemy){
+  ctx.fillStyle='#281517';ctx.fillRect(t.x-25,t.y-36,50,5);
+  ctx.fillStyle=t.boss?'#ffb02e':'#ff4650';
+  ctx.fillRect(t.x-25,t.y-36,50*Math.max(0,t.hp/t.max),5)
+ }
+}
+function draw(){
+ ctx.clearRect(0,0,W,H);
+ let g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#315c32');g.addColorStop(.55,'#234a2a');g.addColorStop(1,'#132e1d');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+ // dirt road
+ ctx.fillStyle='#725f3f';ctx.globalAlpha=.42;ctx.beginPath();ctx.moveTo(W*.37,90);ctx.lineTo(W*.64,90);ctx.lineTo(W*.82,H);ctx.lineTo(W*.16,H);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+ // grass, stones, craters
+ for(let i=0;i<55;i++){let px=(i*97+23)%W,py=105+(i*151)%(Math.max(120,H-250));ctx.fillStyle=i%4===0?'#756747':'#47703b';ctx.beginPath();ctx.arc(px,py,2+i%3,0,7);ctx.fill()}
+ for(let i=0;i<7;i++){let px=(i*131+61)%W,py=150+(i*173)%(Math.max(100,H-330));ctx.fillStyle='#16271955';ctx.beginPath();ctx.ellipse(px,py,18+i%3*5,8+i%2*4,.2,0,7);ctx.fill()}
+
+ [[55,H*.43,125,50],[W*.66,H*.49,150,48],[W*.38,H*.62,50,150]].forEach((o,i)=>{
+  ctx.shadowColor='#0008';ctx.shadowBlur=9;ctx.shadowOffsetY=5;ctx.fillStyle=i===2?'#61553d':'#75664a';ctx.fillRect(...o);
+  ctx.shadowBlur=0;ctx.shadowOffsetY=0;ctx.strokeStyle='#a39068';ctx.lineWidth=2;ctx.strokeRect(...o);
+  ctx.strokeStyle='#ffffff10';for(let k=8;k<o[2];k+=18){ctx.beginPath();ctx.moveTo(o[0]+k,o[1]);ctx.lineTo(o[0]+k,o[1]+o[3]);ctx.stroke()}
+ });
+
+ enemies.forEach(e=>tank(e,true));tank(player,false);
+
+ bullets.forEach(b=>{ctx.strokeStyle='#ffe16a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(b.x-b.vx*2.2,b.y-b.vy*2.2);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.fillStyle='#fff5ae';ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill()});
+ enemyBullets.forEach(b=>{ctx.strokeStyle='#ff684d';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(b.x-b.vx*2,b.y-b.vy*2);ctx.lineTo(b.x,b.y);ctx.stroke();ctx.fillStyle='#ffb18a';ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill()});
+ particles.forEach(p=>{ctx.globalAlpha=Math.min(1,p.l/15);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=8;ctx.beginPath();ctx.arc(p.x,p.y,2+Math.min(4,p.l/12),0,7);ctx.fill();ctx.shadowBlur=0});
+ ctx.globalAlpha=1
+}
 function loop(t){if(!running)return;if(!paused)update();draw();requestAnimationFrame(loop)}

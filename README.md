@@ -1,10 +1,15 @@
-# Tank War ULTIMATE 2.0
-手机浏览器 / GitHub Pages 版。
+# Tank War ULTIMATE 3.0 — 画质升级版
 
-上传并覆盖仓库根目录中的：
-- index.html
-- style.css
-- game.js
+基于已经能正常运行的 2.0 制作，避免改变核心触控逻辑。
 
-功能：触控摇杆、射击、敌人 AI、波次、Boss、金币、等级、永久强化、粒子爆炸、自动存档。
-建议上传后等待 GitHub Pages 1–3 分钟，再强制刷新页面。
+主要升级：
+- 更精细的程序化坦克车体、炮塔、履带和阴影
+- 泥土道路、草地、石块、弹坑氛围
+- 障碍物纹理与阴影
+- 炮弹发光尾迹
+- 更明显的爆炸粒子
+- 战场暗角和更强画面对比
+- 保留 2.0 的敌人 AI、Boss、金币、等级、永久强化、触控摇杆和 FIRE
+
+文件仍然只有 4 个，无 assets 文件夹：
+index.html / style.css / game.js / README.md
