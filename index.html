@@ -1,58 +1,45 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Tank War ULTIMATE</title><style>*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#05080c;color:#fff;font-family:system-ui,-apple-system,sans-serif}button{font:inherit;color:#fff}.screen{display:none;width:100%;height:100%}.screen.on{display:block}.hero{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 50% 25%,#344b36 0,#111b17 37%,#050807 75%);position:relative;overflow:hidden}.hero:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(120deg,#ffffff05 0 1px,transparent 1px 12px);pointer-events:none}.badge{padding:5px 18px;border:1px solid #f7c948;border-radius:30px;color:#f7c948;font-weight:900;letter-spacing:4px;z-index:1}.hero h1{font-size:48px;margin:12px 0 0;letter-spacing:4px;text-shadow:0 5px 18px #000}.sub{margin:0;color:#b8c7b5;letter-spacing:7px}.tankLogo{font-size:65px;margin:15px;filter:drop-shadow(0 10px 10px #000)}.tankLogo span{color:#7c9b63}.panel{width:min(520px,94vw);padding:18px;background:#0d1512e8;border:1px solid #ffffff18;border-radius:20px;box-shadow:0 25px 70px #000}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stats div{text-align:center;background:#17211c;padding:10px;border-radius:12px}.stats b{display:block;font-size:23px}.stats small{color:#95a39a}.panel button,.modal button{width:100%;padding:14px;border:0;border-radius:12px;margin-top:10px;background:#27352d;font-weight:900}.gold{background:linear-gradient(#ffd76a,#d99b18)!important;color:#251700!important;box-shadow:0 5px 18px #d99b1840}header{height:64px;display:flex;justify-content:space-between;align-items:center;padding:0 15px;background:#111915;border-bottom:1px solid #ffffff18}header button{background:#27352d;border:0;border-radius:9px;padding:9px 14px}.garageHero{text-align:center;padding:20px;background:linear-gradient(#1a2a20,#0c120f)}.bigTank{font-size:70px;color:#9bb37e;text-shadow:0 10px 20px #000}.garageHero h2{margin:4px}.garageHero p{color:#9ca89e}.cards{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;height:calc(100% - 245px);overflow:auto;background:#080d0a}.card{padding:15px;background:#151e19;border:1px solid #ffffff12;border-radius:15px}.card h3{margin:0}.card p{font-size:12px;color:#9daaa1;height:30px}.meter{height:7px;background:#28332c;border-radius:5px;overflow:hidden}.meter i{display:block;height:100%;background:#d5aa35}.card button{width:100%;margin-top:12px;padding:10px;border:0;border-radius:9px;background:#33443a;font-weight:800}.card button:disabled{opacity:.4}#gameScreen{position:relative;background:#18231a}canvas{width:100%;height:100%;display:block;touch-action:none}#hud{position:absolute;z-index:5;top:0;left:0;right:0;height:74px;padding:10px;display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;background:linear-gradient(#000c,transparent)}.hp{height:14px;background:#481e1e;border:2px solid #ffffff30;border-radius:8px;overflow:hidden}.hp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#35b65d,#9bc53d)}#hpt{position:absolute;top:28px;left:15px;font-size:10px}.wave{text-align:center;font-weight:900}.wave small{display:block;font-size:10px;color:#ccc}.money{text-align:right}.money button{margin-left:7px;width:42px;height:42px;border:0;border-radius:10px;background:#172019cc}.boss{position:absolute;z-index:6;top:76px;left:15%;right:15%;text-align:center;color:#ffcf66}.boss div{height:9px;background:#3b1111;border-radius:8px;overflow:hidden}.boss i{display:block;height:100%;background:#d53c32}.hide{display:none!important}#joy{position:absolute;z-index:7;left:22px;bottom:25px;width:130px;height:130px;border-radius:50%;border:2px solid #ffffff26;background:#0004;touch-action:none}#joy i{position:absolute;width:48px;height:48px;left:39px;top:39px;border-radius:50%;background:#ffffff45;border:2px solid #ffffff55}#fire{position:absolute;z-index:7;right:24px;bottom:36px;width:105px;height:105px;border-radius:50%;border:3px solid #ffffff30;background:radial-gradient(circle,#f55,#8d1616);font-weight:1000;box-shadow:0 0 35px #e33a}#toast{position:absolute;z-index:8;top:28%;left:0;right:0;text-align:center;font-size:28px;font-weight:1000;text-shadow:0 3px 8px #000;pointer-events:none}.overlay{position:absolute;z-index:20;inset:0;background:#000c;display:flex;align-items:center;justify-content:center}.modal{width:min(400px,86vw);background:#111a15;border:1px solid #ffffff20;padding:22px;border-radius:18px;text-align:center}@media(max-width:500px){.hero h1{font-size:38px}.cards{grid-template-columns:1fr 1fr}}
-.hero>.panel,.hero>.badge,.hero>h1,.hero>.sub,.hero>.tankLogo{position:relative;z-index:2}
-.panel button{position:relative;z-index:10;pointer-events:auto;touch-action:manipulation}
-</style></head><body>
-<div id="lobby" class="screen on"><div class="hero"><div class="badge">ULTIMATE</div><h1>TANK WAR</h1><p class="sub">STEEL FRONT</p><div class="tankLogo">⚙️<span>▰</span>💥</div><div class="panel"><div class="stats"><div>🪙<b id="lc">0</b><small>金币</small></div><div>⭐<b id="ll">1</b><small>等级</small></div><div>🏆<b id="lb">1</b><small>最高波次</small></div></div><button id="play" class="gold">进入战场</button><button id="garage">车库 / 属性强化</button></div></div></div>
-<div id="garageScreen" class="screen"><header><button id="back">←</button><b>坦克车库</b><span>🪙 <i id="gc">0</i></span></header><div class="garageHero"><div class="bigTank">▰━━</div><h2>MK-IV “IRON WOLF”</h2><p>永久强化会自动保存</p></div><div id="cards" class="cards"></div></div>
-<div id="gameScreen" class="screen"><canvas id="game"></canvas><div id="hud"><div class="hp"><i id="hp"></i></div><span id="hpt">100/100</span><div class="wave">WAVE <b id="wv">1</b><small>敌军 <i id="ec">0</i></small></div><div class="money">🪙 <b id="mc">0</b><button id="pause">Ⅱ</button></div></div><div id="bossHud" class="boss hide"><b>BOSS</b><div><i id="bossHp"></i></div></div><div id="joy"><i></i></div><button id="fire">FIRE</button><div id="toast"></div>
-<div id="modal" class="overlay hide"><div class="modal"><h2 id="mt">暂停</h2><p id="md"></p><button id="primary" class="gold">继续</button><button id="secondary">返回大厅</button></div></div></div>
-<script>window.addEventListener('error',function(e){
-  var t=document.getElementById('toast');
-  if(t){t.textContent='程序错误：'+(e.message||'unknown');t.style.color='#ff6b6b';}
-});
-(()=>{const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)],key='TWULT_SAVE';let sv;try{sv=JSON.parse(localStorage.getItem(key)||'null')}catch(e){sv=null}sv=sv||{coins:0,level:1,best:1,u:{armor:0,damage:0,reload:0,speed:0,crit:0}};sv.u={armor:0,damage:0,reload:0,speed:0,crit:0,...sv.u};let S={},raf,last,paused=false,over=false,wave=1,coins=0,p,E=[],B=[],P=[],O=[],joy={x:0,y:0},shooting=false,boss=null,shake=0;
-const screens=[$('#lobby'),$('#garageScreen'),$('#gameScreen')];function save(){localStorage.setItem(key,JSON.stringify(sv))}function show(x){screens.forEach(a=>a.classList.remove('on'));x.classList.add('on')}function lobby(){$('#lc').textContent=sv.coins;$('#ll').textContent=sv.level;$('#lb').textContent=sv.best;show($('#lobby'))}function st(){return{hp:120+sv.u.armor*28,dmg:38+sv.u.damage*9,reload:Math.max(170,520-sv.u.reload*30),speed:2.55+sv.u.speed*.2,crit:.05+sv.u.crit*.025}}function cost(k){return 120+sv.u[k]*160}
-const names={armor:['🛡️ 装甲','最大生命 +28'],damage:['💥 火力','炮弹伤害 +9'],reload:['⚡ 装填','提高射击速度'],speed:['⚙️ 引擎','提高移动速度'],crit:['🎯 暴击','提高暴击概率']};function garage(){$('#gc').textContent=sv.coins;$('#cards').innerHTML=Object.keys(names).map(k=>`<div class=card><h3>${names[k][0]}</h3><p>${names[k][1]} · Lv.${sv.u[k]}/10</p><div class=meter><i style="width:${sv.u[k]*10}%"></i></div><button data-u=${k} ${sv.coins<cost(k)||sv.u[k]>=10?'disabled':''}>升级 🪙${cost(k)}</button></div>`).join('');$$('[data-u]').forEach(b=>b.onclick=()=>{let k=b.dataset.u,c=cost(k);if(sv.coins>=c&&sv.u[k]<10){sv.coins-=c;sv.u[k]++;sv.level=1+Object.values(sv.u).reduce((a,b)=>a+b,0);save();garage()}});show($('#garageScreen'))}
-$('#garage').onclick=garage;$('#back').onclick=lobby;$('#play').onclick=()=>{show($('#gameScreen'));start()};$('#pause').onclick=()=>modal('暂停','战斗已暂停','继续',()=>{paused=false;hideModal()});$('#secondary').onclick=()=>{cancelAnimationFrame(raf);hideModal();lobby()};
-const c=$('#game'),x=c.getContext('2d');let W,H;function resize(){let d=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;c.width=W*d;c.height=H*d;x.setTransform(d,0,0,d,0,0)}addEventListener('resize',resize);resize();
-function start(){S=st();p={x:W/2,y:H*.72,r:19,hp:S.hp,max:S.hp,a:-1.57,t:-1.57,last:0};E=[];B=[];P=[];wave=1;coins=0;boss=null;over=false;paused=false;O=[{x:W*.08,y:H*.38,w:75,h:30},{x:W*.66,y:H*.43,w:105,h:26},{x:W*.38,y:H*.58,w:30,h:90}];spawn();last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
-function spawn(){let n=Math.min(3+wave,10);boss=null;if(wave%5===0){boss={x:W/2,y:130,r:32,hp:450+wave*75,max:450+wave*75,s:.45,last:0};E.push(boss);toast('⚠ BOSS WAVE ⚠')}else{for(let i=0;i<n;i++){let type=Math.random()<.25?'heavy':Math.random()<.4?'fast':'normal',hp=type==='heavy'?120+wave*18:65+wave*12;E.push({x:40+Math.random()*(W-80),y:100+Math.random()*H*.3,r:type==='heavy'?23:17,hp,max:hp,s:type==='fast'?1.25:.7+wave*.025,last:0,type})}toast('WAVE '+wave)}hud()}
-function loop(t){let dt=Math.min(32,t-last);last=t;if(!paused&&!over){update(dt,t);draw()}raf=requestAnimationFrame(loop)}
-function update(dt,t){let m=Math.hypot(joy.x,joy.y);if(m>.08){p.x+=joy.x*S.speed*dt/16.7;p.y+=joy.y*S.speed*dt/16.7;p.a=Math.atan2(joy.y,joy.x)}p.x=Math.max(22,Math.min(W-22,p.x));p.y=Math.max(85,Math.min(H-175,p.y));coll(p);let target=near();if(target)p.t=Math.atan2(target.y-p.y,target.x-p.x);if(shooting&&t-p.last>S.reload){let crit=Math.random()<S.crit;shot(p.x,p.y,p.t,9,S.dmg*(crit?2:1),1);p.last=t;flash(p.x+Math.cos(p.t)*25,p.y+Math.sin(p.t)*25,crit?10:6)}
-E.forEach(e=>{let a=Math.atan2(p.y-e.y,p.x-e.x);e.a=a;e.x+=Math.cos(a)*e.s*dt/16.7;e.y+=Math.sin(a)*e.s*dt/16.7;coll(e);if(Math.hypot(p.x-e.x,p.y-e.y)<360&&t-e.last>(e===boss?550:900+Math.random()*500)){shot(e.x,e.y,a,e===boss?6.3:5, e===boss?22:13+wave,0);e.last=t}});
-for(let i=B.length-1;i>=0;i--){let b=B[i];b.x+=b.vx*dt/16.7;b.y+=b.vy*dt/16.7;b.life-=dt;if(b.life<0||b.x<0||b.x>W||b.y<75||b.y>H-160||wall(b)){B.splice(i,1);continue}if(b.f){for(let j=E.length-1;j>=0;j--){let e=E[j];if(Math.hypot(b.x-e.x,b.y-e.y)<e.r+5){e.hp-=b.d;boom(b.x,b.y,8);B.splice(i,1);if(e.hp<=0){boom(e.x,e.y,e===boss?45:22);shake=e===boss?18:7;coins+=e===boss?150:12+wave*3;E.splice(j,1);if(e===boss)boss=null}break}}}else if(Math.hypot(b.x-p.x,b.y-p.y)<p.r+5){p.hp-=b.d;boom(p.x,p.y,8);shake=5;B.splice(i,1);if(p.hp<=0)finish()}}
-P.forEach(q=>{q.x+=q.vx*dt/16.7;q.y+=q.vy*dt/16.7;q.life-=dt});P=P.filter(q=>q.life>0);shake*=.86;if(!E.length&&!over){wave++;p.hp=Math.min(p.max,p.hp+p.max*.2);spawn()}hud()}
-function shot(px,py,a,s,d,f){B.push({x:px+Math.cos(a)*25,y:py+Math.sin(a)*25,vx:Math.cos(a)*s,vy:Math.sin(a)*s,d,f,life:1800})}function near(){let q=null,z=1e9;E.forEach(e=>{let d=(e.x-p.x)**2+(e.y-p.y)**2;if(d<z){z=d;q=e}});return q}function coll(o){O.forEach(w=>{let cx=Math.max(w.x,Math.min(o.x,w.x+w.w)),cy=Math.max(w.y,Math.min(o.y,w.y+w.h)),dx=o.x-cx,dy=o.y-cy,d=Math.hypot(dx,dy);if(d<o.r){let k=(o.r-d+1)/(d||1);o.x+=dx*k;o.y+=dy*k}})}function wall(b){return O.some(w=>b.x>w.x&&b.x<w.x+w.w&&b.y>w.y&&b.y<w.y+w.h)}function flash(px,py,n){for(let i=0;i<n;i++)P.push({x:px,y:py,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,life:150+Math.random()*180})}function boom(px,py,n){for(let i=0;i<n;i++){let a=Math.random()*6.28,s=1+Math.random()*5;P.push({x:px,y:py,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:250+Math.random()*500})}}
-function draw(){x.save();if(shake)x.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);let g=x.createLinearGradient(0,70,0,H);g.addColorStop(0,'#415b36');g.addColorStop(1,'#1e3020');x.fillStyle=g;x.fillRect(0,0,W,H);for(let i=0;i<70;i++){let px=(i*83)%W,py=80+(i*137)%(H-230);x.fillStyle=i%3?'#36502f':'#6a5d38';x.fillRect(px,py,3+(i%4),3+(i%3))}x.fillStyle='#735f43';x.globalAlpha=.45;x.beginPath();x.moveTo(W*.42,70);x.lineTo(W*.65,70);x.lineTo(W*.8,H);x.lineTo(W*.25,H);x.closePath();x.fill();x.globalAlpha=1;O.forEach(w=>{x.fillStyle='#5b5140';x.fillRect(w.x,w.y,w.w,w.h);x.strokeStyle='#8b7d61';x.strokeRect(w.x,w.y,w.w,w.h)});E.forEach(e=>tank(e,e===boss?'#9f2f25':e.type==='heavy'?'#75362c':'#a63d32','#3b211d'));tank(p,'#6f8f52','#273b25');B.forEach(b=>{x.strokeStyle=b.f?'#ffd65a':'#ff7067';x.lineWidth=2;x.beginPath();x.moveTo(b.x-b.vx*2,b.y-b.vy*2);x.lineTo(b.x,b.y);x.stroke();x.fillStyle='#fff1a8';x.beginPath();x.arc(b.x,b.y,3.5,0,6.28);x.fill()});P.forEach(q=>{x.globalAlpha=Math.max(0,q.life/700);x.fillStyle=q.life>350?'#ff8c2a':'#ffd85a';x.beginPath();x.arc(q.x,q.y,2.5,0,6.28);x.fill()});x.globalAlpha=1;x.restore()}
-function tank(o,col,tr){x.save();x.translate(o.x,o.y);x.rotate(o.a||0);x.fillStyle=tr;x.fillRect(-23,-17,46,9);x.fillRect(-23,8,46,9);x.fillStyle=col;x.fillRect(-18,-12,36,24);x.fillStyle='#1118';x.fillRect(-13,-8,26,16);x.restore();let a=o===p?p.t:o.a;x.save();x.translate(o.x,o.y);x.rotate(a||0);x.fillStyle='#b9b6a3';x.fillRect(0,-3,32,6);x.fillStyle=col;x.beginPath();x.arc(0,0,o===boss?14:10,0,6.28);x.fill();x.restore();if(o!==p){x.fillStyle='#200';x.fillRect(o.x-22,o.y-o.r-13,44,5);x.fillStyle=o===boss?'#ff5b4d':'#e34b43';x.fillRect(o.x-22,o.y-o.r-13,44*Math.max(0,o.hp/o.max),5)}}
-function hud(){$('#hp').style.width=Math.max(0,p.hp/p.max*100)+'%';$('#hpt').textContent=Math.ceil(Math.max(0,p.hp))+'/'+p.max;$('#wv').textContent=wave;$('#ec').textContent=E.length;$('#mc').textContent=coins;if(boss){$('#bossHud').classList.remove('hide');$('#bossHp').style.width=Math.max(0,boss.hp/boss.max*100)+'%'}else $('#bossHud').classList.add('hide')}
-function finish(){over=true;sv.coins+=coins;sv.best=Math.max(sv.best,wave);save();modal('战斗结束',`到达 Wave ${wave} · 获得 🪙 ${coins}`,'再来一局',()=>{hideModal();start()})}function modal(t,d,b,fn){paused=true;$('#mt').textContent=t;$('#md').textContent=d;$('#primary').textContent=b;$('#primary').onclick=fn;$('#modal').classList.remove('hide')}function hideModal(){$('#modal').classList.add('hide')}function toast(s){let e=$('#toast');e.textContent=s;setTimeout(()=>{if(e.textContent===s)e.textContent=''},1100)}
-let jid=null,J=$('#joy'),stick=J.querySelector('i');function jm(X,Y){let r=J.getBoundingClientRect(),dx=X-(r.left+r.width/2),dy=Y-(r.top+r.height/2),m=Math.hypot(dx,dy),k=Math.min(1,42/(m||1)),px=dx*k,py=dy*k;stick.style.transform=`translate(${px}px,${py}px)`;joy.x=px/42;joy.y=py/42}J.onpointerdown=e=>{jid=e.pointerId;J.setPointerCapture(jid);jm(e.clientX,e.clientY)};J.onpointermove=e=>{if(e.pointerId===jid)jm(e.clientX,e.clientY)};J.onpointerup=e=>{jid=null;joy.x=joy.y=0;stick.style.transform=''};let F=$('#fire');F.onpointerdown=e=>{shooting=true;F.setPointerCapture(e.pointerId)};F.onpointerup=F.onpointercancel=()=>shooting=false;lobby()})();</script>
-<script>
-(function(){
-  function bindTap(id, fn){
-    var el=document.getElementById(id);
-    if(!el) return;
-    el.addEventListener('click', fn, {passive:false});
-    el.addEventListener('touchend', function(e){ e.preventDefault(); fn(); }, {passive:false});
-  }
-  // Fallback only: if the main game script failed to bind, clicking will reveal that clearly.
-  setTimeout(function(){
-    var play=document.getElementById('play');
-    var garage=document.getElementById('garage');
-    if(play && typeof play.onclick!=='function'){
-      bindTap('play', function(){
-        var t=document.getElementById('toast');
-        if(t){t.textContent='游戏脚本没有启动，请截图给我';t.style.color='#ff6b6b';}
-      });
-    }
-    if(garage && typeof garage.onclick!=='function'){
-      bindTap('garage', function(){
-        var t=document.getElementById('toast');
-        if(t){t.textContent='游戏脚本没有启动，请截图给我';t.style.color='#ff6b6b';}
-      });
-    }
-  },300);
-})();
-</script>
-</body></html>
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tank War ULTIMATE 2.0</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="menu" class="screen">
+  <div class="badge">ULTIMATE 2.0</div>
+  <h1>TANK WAR</h1><div class="sub">STEEL FRONT</div>
+  <div class="stats">
+    <div>🪙<b id="coinsMenu">0</b><span>金币</span></div>
+    <div>⭐<b id="levelMenu">1</b><span>等级</span></div>
+    <div>🏆<b id="bestMenu">1</b><span>最高波次</span></div>
+  </div>
+  <button id="startBtn">进入战场</button>
+  <button id="garageBtn" class="secondary">车库 / 属性强化</button>
+  <div id="garage" class="garage hidden">
+    <h3>坦克强化</h3>
+    <button data-up="hp">装甲 +20（🪙20）</button>
+    <button data-up="damage">火力 +5（🪙20）</button>
+    <button data-up="speed">速度 +5%（🪙20）</button>
+    <p id="upgradeInfo"></p>
+  </div>
+</div>
+
+<div id="game" class="screen hidden">
+  <div id="hud">
+    <div class="hpbox"><div id="hpbar"></div><span id="hptext">120/120</span></div>
+    <div><b>WAVE <span id="wave">1</span></b><small>敌军 <span id="enemyCount">0</span></small></div>
+    <div>🪙 <span id="coins">0</span></div>
+    <button id="pauseBtn">Ⅱ</button>
+  </div>
+  <canvas id="canvas"></canvas>
+  <div id="joy"><div id="stick"></div></div>
+  <button id="fireBtn">FIRE</button>
+  <div id="bossLabel" class="hidden">⚠ BOSS WAVE ⚠</div>
+  <div id="message"></div>
+</div>
+
+<script src="game.js"></script>
+</body>
+</html>

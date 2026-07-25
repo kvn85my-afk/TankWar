@@ -1,17 +1,10 @@
-Tank War ULTIMATE
-=================
-手机竖屏 HTML5 坦克游戏完整版基础。
+# Tank War ULTIMATE 2.0
+手机浏览器 / GitHub Pages 版。
 
-新增：
-- 全新大厅与车库
-- 5 项永久升级
-- 普通 / 快速 / 重型敌军
-- 每 5 波 Boss
-- Boss 血条
-- 炮弹轨迹、爆炸粒子、屏幕震动
-- 战场道路、障碍物、自动瞄准
-- 金币与最高波次永久保存
-- 手机摇杆 + FIRE
+上传并覆盖仓库根目录中的：
+- index.html
+- style.css
+- game.js
 
-GitHub Pages:
-将本 ZIP 的所有文件上传到仓库根目录，保持 main / root 即可。
+功能：触控摇杆、射击、敌人 AI、波次、Boss、金币、等级、永久强化、粒子爆炸、自动存档。
+建议上传后等待 GitHub Pages 1–3 分钟，再强制刷新页面。
