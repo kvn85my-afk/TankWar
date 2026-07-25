@@ -1,48 +1,23 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Tank War ULTIMATE 6.0</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Tank War ULTIMATE 7.0 HD</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<section id="menu" class="screen menu">
-  <div class="badge">ULTIMATE 6.0</div>
-  <h1>TANK WAR</h1>
-  <p class="subtitle">BATTLEFIELD</p>
-  <div class="menuTank">▰━━━</div>
-  <div class="panel">
-    <div class="stats">
-      <div><b id="mCoins">0</b><small>🪙 金币</small></div>
-      <div><b id="mLevel">1</b><small>⭐ 等级</small></div>
-      <div><b id="mBest">1</b><small>🏆 最高波次</small></div>
-    </div>
-    <button id="start" class="primary">进入战场</button>
-    <button id="garageBtn">车库 / 永久强化</button>
-  </div>
-</section>
-
-<section id="garage" class="screen hidden garage">
-  <header><button id="garageBack">←</button><b>坦克车库</b><span>🪙 <i id="gCoins">0</i></span></header>
-  <div class="garageTank">▰━━━</div>
-  <div id="upgradeList" class="upgradeList"></div>
-</section>
-
-<section id="battle" class="screen hidden battle">
-  <canvas id="game"></canvas>
+<div id="game">
+  <canvas id="c"></canvas>
   <div id="hud">
-    <div class="hpWrap"><div id="hpBar"></div><span id="hpText">140/140</span></div>
-    <div class="wave">WAVE <b id="wave">1</b><small>敌军 <i id="enemyCount">0</i></small></div>
+    <div class="hpbox"><span id="hpText">140/140</span><div class="hp"><i id="hpFill"></i></div></div>
+    <div class="wave"><b id="wave">WAVE 1</b><small id="remain">敌军 5</small></div>
     <div class="coins">🪙 <b id="coins">0</b></div>
     <button id="pause">Ⅱ</button>
   </div>
-  <div id="bossHud" class="boss hidden"><b>BOSS</b><div><i id="bossBar"></i></div></div>
   <div id="joy"><i></i></div>
-  <button id="fire">FIRE</button>
-  <button id="skill" title="维修">+</button>
-  <div id="toast"></div>
-  <div id="modal" class="modal hidden"><div><h2 id="modalTitle">暂停</h2><p id="modalText"></p><button id="modalMain" class="primary">继续</button><button id="quit">返回大厅</button></div></div>
-</section>
+  <button id="repair">✚</button>
+  <button id="fire"><span>➤</span>FIRE</button>
+  <div id="loading">LOADING HD BATTLEFIELD…</div>
+</div>
 <script src="game.js"></script>
 </body></html>
