@@ -1,4 +1,6 @@
 
+// ===== V5.1.1 COLLISION HOTFIX =====
+// Fix: player can no longer spawn/stay trapped inside an island.
 // ===== V5.1 FULL ASSET EDITION =====
 const V51_ASSET_PATHS=[
  'assets/ships/ship_tier_1_wood_boat.png','assets/ships/ship_tier_2_small_sloop.png',
@@ -111,6 +113,33 @@ function blockedByLand(x,y,r=18){
  }
  return false;
 }
+
+function findNearestSafeWater(x,y,r=18){
+ // First keep the requested position when it is already valid water.
+ if(!blockedByLand(x,y,r)) return {x,y};
+
+ // Search outward in rings so a bad spawn point can never trap the ship inside land.
+ const step=28;
+ for(let radius=step; radius<=520; radius+=step){
+   const samples=Math.max(16,Math.ceil(radius/12));
+   for(let n=0;n<samples;n++){
+     const a=(n/samples)*Math.PI*2;
+     const sx=Math.max(60,Math.min(WORLD.w-60,x+Math.cos(a)*radius));
+     const sy=Math.max(60,Math.min(WORLD.h-60,y+Math.sin(a)*radius));
+     if(!blockedByLand(sx,sy,r+4)) return {x:sx,y:sy};
+   }
+ }
+ // Very unlikely fallback: allied harbor water area.
+ return {x:WORLD.w/2,y:WORLD.h-520};
+}
+
+function rescuePlayerFromLand(){
+ if(!blockedByLand(player.x,player.y,player.r)) return;
+ const safe=findNearestSafeWater(player.x,player.y,player.r);
+ player.x=safe.x;
+ player.y=safe.y;
+ waterSplashes.push({x:player.x,y:player.y,life:700,max:700});
+}
 function moveWithCollision(o,nx,ny){
  if(!blockedByLand(nx,ny,o.r||14)){o.x=nx;o.y=ny;return}
  if(!blockedByLand(nx,o.y,o.r||14))o.x=nx;
@@ -168,7 +197,9 @@ function drawLaneForces(){
 }
 
 function resetWave(){
- player.x=WORLD.w/2;player.y=WORLD.h/2; player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
+ const spawn=findNearestSafeWater(WORLD.w/2,WORLD.h/2,player.r);
+ player.x=spawn.x;player.y=spawn.y;
+ player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
  let n=10+Math.min(14,wave*3);
  enemies=[];laneUnits=[];laneSpawnTimer=1;
  for(let i=0;i<n;i++){
@@ -316,6 +347,8 @@ function muzzle(x,y){for(let i=0;i<12;i++)particles.push({x,y,vx:(Math.random()-
 function boom(x,y){shake=10;for(let i=0;i<34;i++)particles.push({x,y,vx:(Math.random()-.5)*280,vy:(Math.random()-.5)*280,life:350+Math.random()*550,c:i%3?'#ff6b20':'#ffd45a'})}
 function update(dt){
  if(paused)return;
+ // Safety net for old saves/map edits: never allow the player to remain trapped inside land.
+ rescuePlayerFromLand();
  let mx=joy.x,my=joy.y,mag=Math.hypot(mx,my);
  if(mag>.08){
    const nx=Math.max(60,Math.min(WORLD.w-60,player.x+mx*player.speed*dt));
