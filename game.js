@@ -248,8 +248,8 @@ function awardCoins(amount,x=player.x,y=player.y){
  floatingTexts.push({
    x:x,y:y-34,
    text:'+$'+amount,
-   life:1100,maxLife:1100,
-   vy:-42
+   life:1300,maxLife:1300,
+   vy:0
  });
  updateHUD();
 }
@@ -294,7 +294,7 @@ function update(dt){
  bullets=bullets.filter(b=>b.life>0&&b.x>-80&&b.x<WORLD.w+80&&b.y>-80&&b.y<WORLD.h+80);
  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96;p.life-=dt*1000});
  particles=particles.filter(p=>p.life>0);
- floatingTexts.forEach(f=>{f.y+=f.vy*dt;f.life-=dt*1000});
+ floatingTexts.forEach(f=>{f.life-=dt*1000;if(f.life<950){f.vy=-48;f.y+=f.vy*dt}});
  floatingTexts=floatingTexts.filter(f=>f.life>0);
  if(player.hp<=0){player.hp=player.max;coins=Math.max(0,coins-10);resetWave()}
  if(enemies.length===0){wave++;resetWave()}
@@ -394,25 +394,85 @@ function drawMiniMap(){
  ctx.restore();
 }
 
+
+function drawWorldElements(){
+ const elems=[
+  ['reef',520,1450],['reef',3650,2300],['reef',1750,3150],['reef',3200,4700],
+  ['tower',1120,2050],['tower',3100,3650],
+  ['treasure',2250,1450],['treasure',820,3500],['treasure',3450,5200],
+  ['pirate',1500,1100],['pirate',2950,2550],['pirate',1450,4850]
+ ];
+ elems.forEach(([t,wx,wy],i)=>{
+   let x=wx-camera.x,y=wy-camera.y;if(x<-90||x>W+90||y<-90||y>H+90)return;
+   ctx.save();
+   if(t==='reef'){
+     ctx.fillStyle='#52726e';for(let k=0;k<5;k++){ctx.beginPath();ctx.arc(x+(k-2)*9,y+(k%2)*7,8+k%3*2,0,7);ctx.fill()}
+     ctx.strokeStyle='#9de7dc55';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(x,y,38,22,.2,0,7);ctx.stroke();
+   }else if(t==='tower'){
+     ctx.fillStyle='#61513c';ctx.fillRect(x-10,y-18,20,34);ctx.fillStyle='#8c7650';ctx.fillRect(x-15,y-24,30,10);
+     ctx.fillStyle='#ffb43c';ctx.beginPath();ctx.arc(x,y-30,5,0,7);ctx.fill();
+   }else if(t==='treasure'){
+     ctx.fillStyle='#a66c25';ctx.fillRect(x-12,y-7,24,16);ctx.fillStyle='#e3bd4c';ctx.fillRect(x-12,y-7,24,4);
+     ctx.font='900 13px Arial';ctx.textAlign='center';ctx.fillText('★',x,y+5);
+   }else{
+     ctx.fillStyle='#211c1a';ctx.beginPath();ctx.moveTo(0+x,y-20);ctx.lineTo(x+12,y+12);ctx.lineTo(x-12,y+12);ctx.closePath();ctx.fill();
+     ctx.fillStyle='#e7e1d0';ctx.font='900 14px Arial';ctx.textAlign='center';ctx.fillText('☠',x,y+5);
+   }
+   ctx.restore();
+ });
+}
+
 function drawBattleLanes(){
  ctx.save();
- const lanes=[WORLD.w*.24,WORLD.w*.50,WORLD.w*.76];
- ctx.globalAlpha=.16;ctx.strokeStyle='#b7f3ff';ctx.lineWidth=90;ctx.setLineDash([80,65]);
- lanes.forEach(x=>{ctx.beginPath();ctx.moveTo(x-camera.x,-camera.y);ctx.lineTo(x-camera.x,WORLD.h-camera.y);ctx.stroke()});
+ // Subtle navigational lanes only — no translucent rectangles.
+ ctx.globalAlpha=.10;ctx.strokeStyle='#9feeff';ctx.lineWidth=3;ctx.setLineDash([24,34]);
+ [WORLD.w*.28,WORLD.w*.50,WORLD.w*.72].forEach(x=>{
+   ctx.beginPath();ctx.moveTo(x-camera.x,-camera.y);ctx.lineTo(x-camera.x,WORLD.h-camera.y);ctx.stroke();
+ });
  ctx.setLineDash([]);
- // ports
- const bw=620,bh=230,bx=WORLD.w/2-bw/2;
- ctx.globalAlpha=.34;ctx.fillStyle='#22a7a0';ctx.fillRect(bx-camera.x,WORLD.h-bh-camera.y,bw,bh);
- ctx.fillStyle='#a73b43';ctx.fillRect(bx-camera.x,-camera.y,bw,bh);
- ctx.globalAlpha=.95;ctx.font='900 23px Arial';ctx.textAlign='center';
- ctx.fillStyle='#a8fff7';ctx.fillText('ALLY PORT',WORLD.w/2-camera.x,WORLD.h-90-camera.y);
- ctx.fillStyle='#ffb0b0';ctx.fillText('ENEMY PORT',WORLD.w/2-camera.x,135-camera.y);
+
+ // Friendly / enemy harbours
+ const ports=[
+  {x:WORLD.w/2,y:WORLD.h-220,ally:true},
+  {x:WORLD.w/2,y:220,ally:false}
+ ];
+ ports.forEach(p=>{
+   let x=p.x-camera.x,y=p.y-camera.y;
+   ctx.globalAlpha=.9;ctx.fillStyle=p.ally?'#3d7b72':'#783b38';
+   ctx.fillRect(x-90,y-26,180,52);
+   ctx.fillStyle='#765d3d';
+   for(let k=-2;k<=2;k++)ctx.fillRect(x+k*34-5,y-55,10,70);
+   ctx.fillStyle='#e4d4a2';ctx.font='900 13px Arial';ctx.textAlign='center';
+   ctx.fillText(p.ally?'ALLY PORT':'ENEMY PORT',x,y+48);
+ });
+
+ // Decorative buoys, wreckage and supply crates.
+ const deco=[
+  ['buoy',900,1250],['crate',3350,1550],['wreck',1900,2450],
+  ['buoy',3200,3350],['crate',900,4200],['wreck',2700,5050],
+  ['crate',2100,5600],['buoy',1150,5350]
+ ];
+ deco.forEach(([t,wx,wy],i)=>{
+   let x=wx-camera.x,y=wy-camera.y;
+   if(x<-60||x>W+60||y<-60||y>H+60)return;
+   ctx.globalAlpha=.95;
+   if(t==='buoy'){
+     ctx.fillStyle='#d64a32';ctx.beginPath();ctx.arc(x,y,7,0,7);ctx.fill();
+     ctx.strokeStyle='#f4df91';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,y-6);ctx.lineTo(x,y-18);ctx.stroke();
+   }else if(t==='crate'){
+     ctx.fillStyle='#8b6439';ctx.fillRect(x-12,y-12,24,24);ctx.strokeStyle='#d3aa66';ctx.strokeRect(x-12,y-12,24,24);
+     ctx.beginPath();ctx.moveTo(x-10,y-10);ctx.lineTo(x+10,y+10);ctx.moveTo(x+10,y-10);ctx.lineTo(x-10,y+10);ctx.stroke();
+   }else{
+     ctx.strokeStyle='#5a4939';ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x-20,y+10);ctx.lineTo(x+18,y-10);ctx.stroke();
+     ctx.fillStyle='#372e28';ctx.beginPath();ctx.ellipse(x,y,22,9,-.3,0,7);ctx.fill();
+   }
+ });
  ctx.restore();
 }
 function draw(){
  
  ctx.save();if(shake)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
- drawWorldBackground();
+ drawWorldBackground();drawWorldElements();
  drawBattleLanes();
  // subtle unexplored-war atmosphere
  let fog=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.20,W/2,H/2,Math.max(W,H)*.78);
@@ -454,7 +514,7 @@ function draw(){
    ctx.save();
    ctx.globalAlpha=Math.min(1,a*1.7);
    ctx.textAlign='center';
-   ctx.font='900 22px Arial';
+   ctx.font='900 25px Arial';
    ctx.lineWidth=5;
    ctx.strokeStyle='#09230f';
    ctx.shadowColor='#ffd84d';
