@@ -11,16 +11,19 @@ border:1px solid #ffffff22;box-shadow:0 24px 70px #000d;text-align:center}
 .pauseCard p{color:#cbd7d1;line-height:1.55}
 .pauseCard button{display:block;width:100%;margin:10px 0;padding:15px;border:0;border-radius:13px;font-weight:900;font-size:18px;color:#fff;background:#1c4938}
 .pauseCard .restart{background:#805c18}
+.pauseCard #mainMenuBtn{background:#155f72}
 .pauseCard .exit{background:#8d2026}
 `;
 document.head.appendChild(pauseStyle);
 
+const mainMenu=document.querySelector('#mainMenu');
 const pauseMenu=document.createElement('div');
 pauseMenu.id='pauseMenu';
 pauseMenu.innerHTML=`<div class="pauseCard">
   <h2>游戏暂停</h2>
   <button id="resumeGame">▶ 继续海战</button>
   <button id="restartGame" class="restart">↻ 重新开始</button>
+  <button id="mainMenuBtn">⌂ 回到主选单</button>
   <button id="exitGame" class="exit">⏻ 退出游戏</button>
 </div>`;
 document.body.appendChild(pauseMenu);
@@ -30,11 +33,11 @@ exitScreen.id='exitScreen';
 exitScreen.innerHTML=`<div class="pauseCard">
   <h2>已退出游戏</h2>
   <p>游戏已经停止。由于这是浏览器网页，系统通常不允许网页强制关闭当前标签页。</p>
-  <button id="backToGame">重新进入游戏</button>
+  <button id="backToGame">回到主选单</button>
 </div>`;
 document.body.appendChild(exitScreen);
 
-let keys={},joy={x:0,y:0},wave=1,coins=0,paused=false,shake=0,last=performance.now();
+let keys={},joy={x:0,y:0},wave=1,coins=0,paused=true,shake=0,last=performance.now();
 const WORLD={w:4200,h:6200};
 const camera={x:0,y:0};
 const imgs={};
@@ -49,14 +52,14 @@ function resize(){
 addEventListener('resize',resize);resize();
 
 const SHIPS=[
- {name:'木船',cost:20,hp:140,speed:215,damage:28,rate:.58,size:44},
- {name:'小帆船',cost:45,hp:175,speed:230,damage:34,rate:.54,size:47},
- {name:'中帆船',cost:80,hp:215,speed:240,damage:42,rate:.50,size:50},
- {name:'大帆船',cost:130,hp:270,speed:250,damage:52,rate:.46,size:54},
- {name:'小战艇',cost:210,hp:335,speed:265,damage:64,rate:.41,size:56},
- {name:'中战艇',cost:320,hp:410,speed:278,damage:78,rate:.36,size:60},
- {name:'大战艇',cost:480,hp:510,speed:290,damage:94,rate:.31,size:65},
- {name:'终极战艇',cost:0,hp:650,speed:305,damage:115,rate:.25,size:72}
+ {name:'木船',cost:20,hp:140,speed:215,damage:28,rate:.58,size:42,guns:1,range:430},
+ {name:'小帆船',cost:45,hp:175,speed:228,damage:34,rate:.54,size:46,guns:1,range:455},
+ {name:'中帆船',cost:80,hp:220,speed:238,damage:42,rate:.50,size:50,guns:2,range:480},
+ {name:'大帆船',cost:130,hp:280,speed:248,damage:52,rate:.46,size:55,guns:2,range:505},
+ {name:'小战艇',cost:210,hp:350,speed:262,damage:64,rate:.41,size:58,guns:2,range:535},
+ {name:'中战艇',cost:320,hp:430,speed:274,damage:78,rate:.36,size:62,guns:3,range:565},
+ {name:'大战艇',cost:480,hp:530,speed:286,damage:94,rate:.31,size:67,guns:4,range:600},
+ {name:'终极战艇',cost:0,hp:680,speed:300,damage:118,rate:.25,size:74,guns:5,range:650}
 ];
 let shipTier=0;
 let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:215,r:13};
@@ -115,7 +118,7 @@ function drawLaneForces(){
 }
 
 function resetWave(){
- player.x=WORLD.w/2;player.y=WORLD.h/2;
+ player.x=WORLD.w/2;player.y=WORLD.h/2; player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
  let n=5+Math.min(9,wave*2);
  enemies=[];laneUnits=[];laneSpawnTimer=1;
  for(let i=0;i<n;i++){
@@ -131,6 +134,10 @@ function updateHUD(){
  const sl=$('#shipLevel'),uc=$('#upgradeCost');
  if(sl)sl.textContent=SHIPS[shipTier].name;
  if(uc)uc.textContent=shipTier<SHIPS.length-1?SHIPS[shipTier].cost:'MAX';
+ const ss=$('#shipStats'),pt=$('#progressTitle'),px=$('#progressText');
+ if(ss)ss.textContent='火力 '+SHIPS[shipTier].damage+' · 炮 '+SHIPS[shipTier].guns;
+ if(pt)pt.textContent='Lv.'+(shipTier+1)+' '+SHIPS[shipTier].name;
+ if(px)px.textContent=shipTier<SHIPS.length-1?'下一阶：'+SHIPS[shipTier+1].name:'已达到终极战艇';
 }
 function updateCamera(snap=false){
  let tx=player.x-W/2,ty=player.y-H/2;
@@ -153,11 +160,17 @@ function fireAt(target,heavy=false){
  // Auto aim the tank toward the current target when firing.
  player.a=a;
  let speed=heavy?720:560;
- bullets.push({
-   x:player.x+Math.cos(a)*48,y:player.y+Math.sin(a)*48,
-   vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
-   life:heavy?1700:1500,f:true,heavy:heavy,damage:heavy?Math.round(SHIPS[shipTier].damage*2.7):SHIPS[shipTier].damage
- });
+ const guns=heavy?1:SHIPS[shipTier].guns;
+ for(let gi=0;gi<guns;gi++){
+   const spread=(gi-(guns-1)/2)*0.045;
+   const aa=a+spread;
+   bullets.push({
+     x:player.x+Math.cos(aa)*48,y:player.y+Math.sin(aa)*48,
+     vx:Math.cos(aa)*speed,vy:Math.sin(aa)*speed,
+     life:heavy?1700:1500,f:true,heavy:heavy,
+     damage:heavy?Math.round(SHIPS[shipTier].damage*2.7):Math.round(SHIPS[shipTier].damage/Math.max(1,guns*.72))
+   });
+ }
  muzzle(player.x+Math.cos(a)*50,player.y+Math.sin(a)*50);
  if(heavy){shake=7;for(let i=0;i<18;i++)particles.push({x:player.x+Math.cos(a)*48,y:player.y+Math.sin(a)*48,vx:(Math.random()-.5)*220,vy:(Math.random()-.5)*220,life:350,c:i%2?'#ff6b20':'#fff0a0'})}
 }
@@ -277,62 +290,85 @@ function screenX(x){return x-camera.x}
 function screenY(y){return y-camera.y}
 function visible(o,pad=180){let x=screenX(o.x),y=screenY(o.y);return x>-pad&&x<W+pad&&y>-pad&&y<H+pad}
 function drawSprite(im,o,size){
- let sx=screenX(o.x),sy=screenY(o.y);
- const enemy=o!==player;
+ let sx=screenX(o.x),sy=screenY(o.y),enemy=o!==player;
+ let tier=enemy?(o.boss?6:Math.min(4,(o.type||1)+1)):shipTier;
  ctx.save();ctx.translate(sx,sy);ctx.rotate(o.a+Math.PI/2);
- // wake
- ctx.globalAlpha=.45;ctx.strokeStyle='#c9f7ff';ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(-size*.28,size*.34);ctx.lineTo(-size*.5,size*.8);
- ctx.moveTo(size*.28,size*.34);ctx.lineTo(size*.5,size*.8);ctx.stroke();
+
+ // water wake and shadow
+ ctx.globalAlpha=.30;ctx.fillStyle='#00131b';ctx.beginPath();ctx.ellipse(5,10,size*.40,size*.58,0,0,Math.PI*2);ctx.fill();
+ ctx.globalAlpha=.55;ctx.strokeStyle='#bdefff';ctx.lineWidth=2;
+ for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(-size*(.22+k*.07),size*.30);ctx.lineTo(-size*(.38+k*.10),size*(.72+k*.13));ctx.stroke();
+ ctx.beginPath();ctx.moveTo(size*(.22+k*.07),size*.30);ctx.lineTo(size*(.38+k*.10),size*(.72+k*.13));ctx.stroke()}
  ctx.globalAlpha=1;
+
  // hull
- ctx.fillStyle=enemy?'#5b2024':(shipTier<4?'#7b512f':'#435766');
- ctx.strokeStyle=enemy?'#ff7777':'#9ff5ff';ctx.lineWidth=2;
- ctx.beginPath();ctx.moveTo(0,-size*.55);ctx.lineTo(size*.34,-size*.18);
- ctx.lineTo(size*.28,size*.46);ctx.quadraticCurveTo(0,size*.62,-size*.28,size*.46);
- ctx.lineTo(-size*.34,-size*.18);ctx.closePath();ctx.fill();ctx.stroke();
- // deck / sail / gun superstructure
- if(!enemy && shipTier<4){
-   ctx.strokeStyle='#d8c7a2';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-size*.25);ctx.lineTo(0,size*.25);ctx.stroke();
-   ctx.fillStyle='#f1e4c4';ctx.beginPath();ctx.moveTo(2,-size*.20);ctx.lineTo(size*.34,size*.02);ctx.lineTo(2,size*.16);ctx.closePath();ctx.fill();
+ let hull=enemy?'#61322a':tier<4?'#765033':'#465b66';
+ ctx.fillStyle=hull;ctx.strokeStyle=enemy?'#d87863':'#d0d7cf';ctx.lineWidth=1.8;
+ ctx.beginPath();ctx.moveTo(0,-size*.62);ctx.quadraticCurveTo(size*.34,-size*.34,size*.34,-size*.08);
+ ctx.lineTo(size*.27,size*.47);ctx.quadraticCurveTo(0,size*.64,-size*.27,size*.47);
+ ctx.lineTo(-size*.34,-size*.08);ctx.quadraticCurveTo(-size*.34,-size*.34,0,-size*.62);ctx.closePath();ctx.fill();ctx.stroke();
+
+ // deck
+ ctx.fillStyle=tier<4?'#a77a4c':'#83949b';ctx.beginPath();ctx.ellipse(0,0,size*.23,size*.40,0,0,Math.PI*2);ctx.fill();
+
+ if(tier<4){
+   // mast + sails, increasingly large
+   ctx.strokeStyle='#3d2a1b';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-size*.35);ctx.lineTo(0,size*.34);ctx.stroke();
+   ctx.fillStyle=enemy?'#a96d55':'#e5d5ad';
+   ctx.beginPath();ctx.moveTo(2,-size*.30);ctx.lineTo(size*(.27+tier*.025),-size*.02);ctx.lineTo(2,size*.08);ctx.closePath();ctx.fill();
+   if(tier>=2){ctx.beginPath();ctx.moveTo(-2,-size*.10);ctx.lineTo(-size*.25,size*.12);ctx.lineTo(-2,size*.24);ctx.closePath();ctx.fill()}
  }else{
-   ctx.fillStyle=enemy?'#2d3338':'#a9bac4';ctx.fillRect(-size*.16,-size*.12,size*.32,size*.28);
-   ctx.fillStyle='#17232a';ctx.fillRect(-size*.05,-size*.40,size*.10,size*.34);
-   ctx.beginPath();ctx.arc(0,-size*.16,size*.12,0,Math.PI*2);ctx.fill();
+   // warship bridge
+   ctx.fillStyle=enemy?'#493c39':'#a9b6ba';ctx.fillRect(-size*.15,-size*.04,size*.30,size*.27);
+   ctx.fillStyle='#243239';ctx.fillRect(-size*.06,-size*.23,size*.12,size*.22);
+   // turrets
+   let gc=enemy?Math.min(3,tier-2):SHIPS[shipTier].guns;
+   for(let g=0;g<Math.min(4,gc);g++){
+     let gy=-size*.35+g*size*.20;
+     ctx.fillStyle='#26353b';ctx.beginPath();ctx.arc(0,gy,size*.085,0,Math.PI*2);ctx.fill();
+     ctx.fillRect(-2,gy-size*.20,4,size*.20);
+   }
  }
+ // side gun dots for classic battle-ship feel
+ if(tier>=2){ctx.fillStyle='#191b1b';for(let q=-1;q<=1;q++){ctx.beginPath();ctx.arc(size*.28,q*size*.16,2.2,0,7);ctx.fill();ctx.beginPath();ctx.arc(-size*.28,q*size*.16,2.2,0,7);ctx.fill()}}
  ctx.restore();
 }
 function drawWorldBackground(){
- // Deep ocean
- ctx.fillStyle='#07506b';ctx.fillRect(0,0,W,H);
- // Moving-looking wave lines anchored to world coordinates
- ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle='#b9f4ff';ctx.lineWidth=2;
- const gap=86;
- let y0=Math.floor(camera.y/gap)*gap;
+ // layered deep tropical water
+ let g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#061f45');g.addColorStop(.48,'#083a66');g.addColorStop(1,'#071c3d');
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+ // water texture
+ ctx.save();ctx.globalAlpha=.13;ctx.strokeStyle='#76cce0';ctx.lineWidth=1.5;
+ const gap=70;let y0=Math.floor(camera.y/gap)*gap;
  for(let y=y0;y<camera.y+H+gap;y+=gap){
    let sy=y-camera.y;
-   ctx.beginPath();
-   for(let x=Math.floor(camera.x/160)*160;x<camera.x+W+180;x+=160){
-     let sx=x-camera.x;
-     ctx.moveTo(sx,sy);
-     ctx.quadraticCurveTo(sx+32,sy-9,sx+64,sy);
+   for(let x=Math.floor(camera.x/150)*150;x<camera.x+W+170;x+=150){
+     let sx=x-camera.x,phase=((x+y)/100)%20;
+     ctx.beginPath();ctx.moveTo(sx,sy);ctx.quadraticCurveTo(sx+28,sy-6-phase*.15,sx+60,sy);ctx.stroke();
    }
-   ctx.stroke();
- }
- ctx.restore();
- // Islands / reefs create sea-lane feeling
+ }ctx.restore();
+
+ // Warcraft-like island clusters, kept small enough for mobile navigation
  const islands=[
-  [700,900,260],[3300,1250,300],[1200,2250,330],[3050,2750,260],
-  [650,3650,300],[3450,4050,340],[1450,5000,300],[2900,5350,280]
+ [520,780,145,95],[3450,900,180,115],[1040,1650,125,85],[2780,1880,170,100],
+ [650,2800,175,105],[3500,3100,145,90],[1500,3800,160,100],[2850,4300,190,115],
+ [620,5050,145,95],[3500,5400,180,105]
  ];
- for(const [ix,iy,r] of islands){
-   const x=ix-camera.x,y=iy-camera.y;
-   if(x<-r||x>W+r||y<-r||y>H+r)continue;
-   ctx.fillStyle='#d2bd79';ctx.beginPath();ctx.ellipse(x,y,r,r*.62,.25,0,Math.PI*2);ctx.fill();
-   ctx.fillStyle='#3e774c';ctx.beginPath();ctx.ellipse(x,y-8,r*.72,r*.42,.25,0,Math.PI*2);ctx.fill();
-   ctx.strokeStyle='#a7f1ff88';ctx.lineWidth=10;ctx.beginPath();ctx.ellipse(x,y,r*1.06,r*.68,.25,0,Math.PI*2);ctx.stroke();
+ for(const [ix,iy,rx,ry] of islands){
+   let x=ix-camera.x,y=iy-camera.y;if(x<-rx*2||x>W+rx*2||y<-ry*2||y>H+ry*2)continue;
+   // shallow water
+   ctx.fillStyle='#5aa7a355';ctx.beginPath();ctx.ellipse(x,y,rx*1.28,ry*1.30,.18,0,7);ctx.fill();
+   // beach
+   ctx.fillStyle='#bca36a';ctx.beginPath();ctx.ellipse(x,y,rx,ry,.18,0,7);ctx.fill();
+   // rock/forest interior
+   ctx.fillStyle='#183e2a';ctx.beginPath();ctx.ellipse(x,y-7,rx*.80,ry*.72,.18,0,7);ctx.fill();
+   ctx.fillStyle='#285d31';
+   for(let t=0;t<9;t++){let a=t*2.4,tx=x+Math.sin(a*1.7)*rx*.58,ty=y-10+Math.cos(a)*ry*.45;ctx.beginPath();ctx.arc(tx,ty,8+(t%3)*3,0,7);ctx.fill()}
+   ctx.fillStyle='#62645a';for(let r=0;r<5;r++){let a=r*1.9;ctx.beginPath();ctx.arc(x+Math.cos(a)*rx*.72,y+Math.sin(a)*ry*.55,5+r%2*3,0,7);ctx.fill()}
  }
- ctx.strokeStyle='#9eefff88';ctx.lineWidth=8;ctx.strokeRect(-camera.x,-camera.y,WORLD.w,WORLD.h);
+ // map border
+ ctx.strokeStyle='#d6bd6c66';ctx.lineWidth=7;ctx.strokeRect(-camera.x,-camera.y,WORLD.w,WORLD.h);
 }
 function drawMiniMap(){
  const mw=118,mh=118,x=W-mw-18,y=120;
@@ -364,6 +400,9 @@ function draw(){
  ctx.save();if(shake)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
  drawWorldBackground();
  drawBattleLanes();
+ // subtle unexplored-war atmosphere
+ let fog=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.20,W/2,H/2,Math.max(W,H)*.78);
+ fog.addColorStop(0,'#0000');fog.addColorStop(1,'#00000055');ctx.fillStyle=fog;ctx.fillRect(0,0,W,H);
  let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b44');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0008');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
 
  drawLaneForces();
@@ -404,11 +443,32 @@ requestAnimationFrame(loop);
 $('#fire').addEventListener('pointerdown',e=>{e.preventDefault();fire()});
 $('#repair').addEventListener('pointerdown',e=>{e.preventDefault();repairSkill()});
 $('#shock').addEventListener('pointerdown',e=>{e.preventDefault();shockWave()});
+
+function showMainMenu(){
+ paused=true;
+ pauseMenu.classList.remove('show');
+ exitScreen.classList.remove('show');
+ mainMenu?.classList.add('show');
+}
+function startFromMainMenu(){
+ mainMenu?.classList.remove('show');
+ paused=false;
+ last=performance.now();
+}
+$('#startGameBtn')?.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ startFromMainMenu();
+});
+$('#mainMenuBtn')?.addEventListener('pointerdown',e=>{
+ e.preventDefault();
+ showMainMenu();
+});
+
 $('#pause').onclick=()=>{paused=true;pauseMenu.classList.add('show')};
 $('#resumeGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;last=performance.now()};
 $('#restartGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];autoFireTimer=0;heavyCooldown=0;shockCooldown=0;repairCooldown=0;resetWave();updateSkillUI();last=performance.now()};
 $('#exitGame').onclick=()=>{paused=true;pauseMenu.classList.remove('show');exitScreen.classList.add('show');try{window.close()}catch(e){}};
-$('#backToGame').onclick=()=>{exitScreen.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];autoFireTimer=0;heavyCooldown=0;shockCooldown=0;repairCooldown=0;resetWave();updateSkillUI();last=performance.now()};
+$('#backToGame').onclick=()=>{exitScreen.classList.remove('show');showMainMenu()};
 
 let J=$('#joy'),knob=J.querySelector('i'),pid=null;
 function moveJoy(e){let r=J.getBoundingClientRect(),x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2),m=Math.hypot(x,y),max=Math.max(42,r.width*.31);if(m>max){x=x/m*max;y=y/m*max}joy.x=x/max;joy.y=y/max;knob.style.transform=`translate(${x}px,${y}px)`}
@@ -426,7 +486,7 @@ function upgradeShip(){
  const s=SHIPS[shipTier];
  const ratio=Math.max(.35,player.hp/player.max);
  player.max=s.hp; player.hp=Math.round(s.hp*ratio);
- player.speed=s.speed; autoFireRate=s.rate;
+ player.speed=s.speed; autoFireRate=s.rate; autoRange=s.range;
  boom(player.x,player.y); updateHUD();
 }
 $('#upgradeShip')?.addEventListener('pointerdown',e=>{e.preventDefault();upgradeShip()});

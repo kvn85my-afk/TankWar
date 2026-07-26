@@ -2,16 +2,24 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Battle Ship Mobile - Portrait Sea War V1</title>
+<title>Battle Ship Mobile - Warcraft Style V2</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div id="mainMenu" class="mainMenu show">
+  <div class="mainMenuCard">
+    <div class="gameLogo">BATTLE SHIP</div>
+    <div class="gameSub">海战</div>
+    <div class="versionTag">版本 V2.1</div>
+    <button id="startGameBtn">▶ 开始游戏</button>
+  </div>
+</div>
 <div id="game">
   <canvas id="c"></canvas>
   <div id="hud">
     <div class="hpbox"><span id="hpText">140/140</span><div class="hp"><i id="hpFill"></i></div></div>
     <div class="wave"><b id="wave">WAVE 1</b><small id="remain">敌军 5</small></div>
-    <div class="coins">🪙 <b id="coins">0</b><small id="shipLevel">木船</small></div>
+    <div class="coins">🪙 <b id="coins">0</b><small id="shipLevel">木船</small><small id="shipStats"></small></div>
     <button id="pause">Ⅱ</button>
   </div>
 
@@ -37,8 +45,12 @@
     </button>
   </div>
 
-  <div id="loading">LOADING OCEAN BATTLEFIELD…</div>
-  <button id="upgradeShip">⬆ 升级船只 <span id="upgradeCost">20</span>🪙</button>
+  <div id="loading">LOADING BATTLE SHIPS WORLD…</div>
+  <div id="progressPanel">
+  <b id="progressTitle">木船</b>
+  <span id="progressText">下一阶：小帆船</span>
+</div>
+<button id="upgradeShip">⬆ 升级船只 <span id="upgradeCost">20</span>🪙</button>
 </div>
 <script src="game.js"></script>
 </body></html>

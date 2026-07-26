@@ -88,3 +88,43 @@ body{background:#031923}
  font-weight:900;font-size:12px;box-shadow:0 8px 24px #000b,0 0 18px #38cfff55
 }
 #upgradeShip:active{transform:translateX(-50%) scale(.95)}
+
+/* ===== Warcraft-style Battleship V2 ===== */
+#shipStats{display:block;font-size:8px;color:#d9f6ff;opacity:.9}
+#progressPanel{
+ position:fixed;z-index:6;left:50%;bottom:64px;transform:translateX(-50%);
+ min-width:150px;padding:6px 10px;border-radius:9px;background:#07130fd9;
+ border:1px solid #d0ad58aa;text-align:center;box-shadow:0 8px 22px #000b;
+ pointer-events:none
+}
+#progressPanel b{display:block;font-size:11px;color:#f1d27a}
+#progressPanel span{display:block;font-size:9px;color:#d7e5df;margin-top:2px}
+
+
+/* ===== Main Menu / Version ===== */
+.mainMenu{
+ position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;
+ padding:24px;background:
+ radial-gradient(circle at 50% 30%,#0b5570aa 0,#052433dd 38%,#020b12f5 78%),
+ linear-gradient(#041a26,#02080d);
+}
+.mainMenu.show{display:flex}
+.mainMenuCard{
+ width:min(88vw,390px);padding:34px 24px 28px;border-radius:24px;text-align:center;
+ background:linear-gradient(160deg,#082b36ee,#03161fee);
+ border:1px solid #9defff55;box-shadow:0 28px 80px #000e,0 0 40px #26c8ff22;
+}
+.gameLogo{
+ font-size:38px;font-weight:1000;letter-spacing:2px;color:#e8fbff;
+ text-shadow:0 3px 0 #12465c,0 0 22px #34d7ff88;
+}
+.gameSub{font-size:22px;font-weight:900;color:#c7f5ff;margin-top:4px}
+.versionTag{
+ display:inline-block;margin:14px 0 26px;padding:6px 12px;border-radius:999px;
+ border:1px solid #e2c56d77;background:#15140bcc;color:#f4dc8a;font-weight:900;font-size:13px;
+}
+#startGameBtn{
+ width:100%;padding:16px;border:0;border-radius:15px;
+ background:linear-gradient(#17a08d,#076b60);color:#fff;font-size:20px;font-weight:1000;
+ box-shadow:0 10px 28px #000a,0 0 22px #3fffe455;
+}
