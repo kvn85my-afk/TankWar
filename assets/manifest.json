@@ -1,0 +1,40 @@
+{
+  "version": "V5.1 Full Asset Edition",
+  "ships": [
+    "assets/ships/ship_tier_1_wood_boat.png",
+    "assets/ships/ship_tier_2_small_sloop.png",
+    "assets/ships/ship_tier_3_medium_frigate.png",
+    "assets/ships/ship_tier_4_large_galleon.png",
+    "assets/ships/ship_tier_5_small_gunboat.png",
+    "assets/ships/ship_tier_6_medium_destroyer.png",
+    "assets/ships/ship_tier_7_large_battleship.png",
+    "assets/ships/ship_tier_8_ultimate_dreadnought.png"
+  ],
+  "islands": [
+    "assets/islands/island_forest_03.png",
+    "assets/islands/island_rocky_02.png",
+    "assets/islands/island_tropical_01.png"
+  ],
+  "environment": [
+    "assets/environment/coastal_props.png",
+    "assets/environment/ocean_deep.png",
+    "assets/environment/ocean_shallow.png",
+    "assets/environment/palm_cluster.png",
+    "assets/environment/reef_water.png",
+    "assets/environment/rock_cluster.png"
+  ],
+  "buildings": [
+    "assets/buildings/dock_piece.png",
+    "assets/buildings/harbor_port.png"
+  ],
+  "effects": [
+    "assets/effects/cannon_flash.png",
+    "assets/effects/cannon_tracer.png",
+    "assets/effects/fire_smoke.png",
+    "assets/effects/gold_reward.png",
+    "assets/effects/hull_explosion.png",
+    "assets/effects/sinking_ship.png",
+    "assets/effects/wake.png",
+    "assets/effects/water_splash.png"
+  ]
+}
