@@ -56,6 +56,7 @@ addEventListener('resize',resize);resize();
 
 let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:235,r:38};
 let enemies=[],bullets=[],particles=[];
+let autoFireTimer=0,autoFireRate=0.58,autoRange=520,heavyCooldown=0,heavyCooldownMax=5;
 
 function spawnFarFromPlayer(){
  let x,y,d=0;
@@ -87,11 +88,36 @@ function updateCamera(snap=false){
  if(snap){camera.x=tx;camera.y=ty}
  else {camera.x+=(tx-camera.x)*.12;camera.y+=(ty-camera.y)*.12}
 }
+function nearestEnemy(range=autoRange){
+ let best=null,bd=range;
+ for(const e of enemies){
+   const d=Math.hypot(e.x-player.x,e.y-player.y);
+   if(d<bd){bd=d;best=e}
+ }
+ return best;
+}
+function fireAt(target,heavy=false){
+ if(paused||!target)return;
+ let dx=target.x-player.x,dy=target.y-player.y,d=Math.hypot(dx,dy)||1;
+ let a=Math.atan2(dy,dx);
+ // Auto aim the tank toward the current target when firing.
+ player.a=a;
+ let speed=heavy?720:560;
+ bullets.push({
+   x:player.x+Math.cos(a)*48,y:player.y+Math.sin(a)*48,
+   vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
+   life:heavy?1700:1500,f:true,heavy:heavy,damage:heavy?95:35
+ });
+ muzzle(player.x+Math.cos(a)*50,player.y+Math.sin(a)*50);
+ if(heavy){shake=7;for(let i=0;i<18;i++)particles.push({x:player.x+Math.cos(a)*48,y:player.y+Math.sin(a)*48,vx:(Math.random()-.5)*220,vy:(Math.random()-.5)*220,life:350,c:i%2?'#ff6b20':'#fff0a0'})}
+}
 function fire(){
- if(paused)return;
- let a=player.a;
- bullets.push({x:player.x+Math.cos(a)*46,y:player.y+Math.sin(a)*46,vx:Math.cos(a)*560,vy:Math.sin(a)*560,life:1500,f:true});
- muzzle(player.x+Math.cos(a)*48,player.y+Math.sin(a)*48);
+ // FIRE button is now the heavy cannon skill.
+ if(paused||heavyCooldown>0)return;
+ const target=nearestEnemy(760);
+ if(!target)return;
+ heavyCooldown=heavyCooldownMax;
+ fireAt(target,true);
 }
 function muzzle(x,y){for(let i=0;i<12;i++)particles.push({x,y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,life:250,c:i%2?'#ffb42d':'#fff2a0'})}
 function boom(x,y){shake=10;for(let i=0;i<34;i++)particles.push({x,y,vx:(Math.random()-.5)*280,vy:(Math.random()-.5)*280,life:350+Math.random()*550,c:i%3?'#ff6b20':'#ffd45a'})}
@@ -100,6 +126,13 @@ function update(dt){
  let mx=joy.x,my=joy.y,mag=Math.hypot(mx,my);
  if(mag>.08){player.x+=mx*player.speed*dt;player.y+=my*player.speed*dt;player.a=Math.atan2(my,mx)}
  player.x=Math.max(60,Math.min(WORLD.w-60,player.x));player.y=Math.max(60,Math.min(WORLD.h-60,player.y));
+ autoFireTimer-=dt;
+ heavyCooldown=Math.max(0,heavyCooldown-dt);
+ const autoTarget=nearestEnemy(autoRange);
+ if(autoTarget&&autoFireTimer<=0){
+   autoFireTimer=autoFireRate;
+   fireAt(autoTarget,false);
+ }
 
  enemies.forEach(e=>{
    let dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;e.a=Math.atan2(dy,dx);
@@ -115,7 +148,7 @@ function update(dt){
    if(b.life<=0)return;
    if(b.f){
      for(let e of enemies)if(Math.hypot(b.x-e.x,b.y-e.y)<e.r+9){
-       e.hp-=35;b.life=0;muzzle(b.x,b.y);if(e.hp<=0){coins+=e.boss?30:5;boom(e.x,e.y)};break;
+       e.hp-=(b.damage||35);b.life=0;muzzle(b.x,b.y);if(e.hp<=0){coins+=e.boss?30:5;boom(e.x,e.y)};break;
      }
    }else if(Math.hypot(b.x-player.x,b.y-player.y)<player.r+7){player.hp-=8;b.life=0;shake=5}
  });
@@ -183,9 +216,16 @@ function draw(){
  let px=screenX(player.x),py=screenY(player.y);
  ctx.strokeStyle='#39fff0bb';ctx.lineWidth=2;ctx.shadowColor='#35fff0';ctx.shadowBlur=18;ctx.beginPath();ctx.arc(px,py,40,0,7);ctx.stroke();ctx.shadowBlur=0;
 
- bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#8ffcff':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=18;ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x-b.vx*.035,y-b.vy*.035);ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,3.5,0,7);ctx.fill()});
+ bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#8ffcff':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=18;ctx.lineWidth=b.heavy?8:4;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
  particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
- drawMiniMap();ctx.restore();
+ drawMiniMap();
+ // Heavy cannon cooldown indicator beside FIRE button.
+ ctx.save();
+ ctx.font='700 14px Arial';ctx.textAlign='right';
+ ctx.fillStyle=heavyCooldown>0?'#ffd27a':'#8dffbd';
+ ctx.fillText(heavyCooldown>0?'重炮 '+heavyCooldown.toFixed(1)+'s':'重炮 READY',W-34,H-205);
+ ctx.restore();
+ ctx.restore();
 }
 function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();requestAnimationFrame(loop)}
 requestAnimationFrame(loop);
@@ -194,9 +234,9 @@ $('#fire').addEventListener('pointerdown',e=>{e.preventDefault();fire()});
 $('#repair').addEventListener('pointerdown',e=>{e.preventDefault();player.hp=Math.min(player.max,player.hp+35);updateHUD()});
 $('#pause').onclick=()=>{paused=true;pauseMenu.classList.add('show')};
 $('#resumeGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;last=performance.now()};
-$('#restartGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];resetWave();last=performance.now()};
+$('#restartGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];autoFireTimer=0;heavyCooldown=0;resetWave();last=performance.now()};
 $('#exitGame').onclick=()=>{paused=true;pauseMenu.classList.remove('show');exitScreen.classList.add('show');try{window.close()}catch(e){}};
-$('#backToGame').onclick=()=>{exitScreen.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];resetWave();last=performance.now()};
+$('#backToGame').onclick=()=>{exitScreen.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];autoFireTimer=0;heavyCooldown=0;resetWave();last=performance.now()};
 
 let J=$('#joy'),knob=J.querySelector('i'),pid=null;
 function moveJoy(e){let r=J.getBoundingClientRect(),x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2),m=Math.hypot(x,y),max=47;if(m>max){x=x/m*max;y=y/m*max}joy.x=x/max;joy.y=y/max;knob.style.transform=`translate(${x}px,${y}px)`}
