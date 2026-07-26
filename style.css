@@ -76,3 +76,15 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent}
  #joy{width:112px;height:112px}
  #skills{transform:scale(.82);transform-origin:right bottom}
 }
+
+
+/* ===== Battle Ship V1 additions ===== */
+body{background:#031923}
+#shipLevel{display:block;font-size:9px;margin-top:2px;color:#9feaff;text-align:center}
+#upgradeShip{
+ position:fixed;z-index:7;left:50%;bottom:max(18px,env(safe-area-inset-bottom));
+ transform:translateX(-50%);border:2px solid #8ee8ff;border-radius:15px;
+ padding:9px 13px;background:linear-gradient(#164d65,#082b3d);color:#fff;
+ font-weight:900;font-size:12px;box-shadow:0 8px 24px #000b,0 0 18px #38cfff55
+}
+#upgradeShip:active{transform:translateX(-50%) scale(.95)}

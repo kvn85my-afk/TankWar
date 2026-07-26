@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Tank War Mobile - Portrait Battle V3</title>
+<title>Battle Ship Mobile - Portrait Sea War V1</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
   <div id="hud">
     <div class="hpbox"><span id="hpText">140/140</span><div class="hp"><i id="hpFill"></i></div></div>
     <div class="wave"><b id="wave">WAVE 1</b><small id="remain">敌军 5</small></div>
-    <div class="coins">🪙 <b id="coins">0</b></div>
+    <div class="coins">🪙 <b id="coins">0</b><small id="shipLevel">木船</small></div>
     <button id="pause">Ⅱ</button>
   </div>
 
@@ -20,24 +20,25 @@
   <div id="skills">
     <button id="repair" class="skill repairSkill">
       <span class="skillIcon">🔧</span>
-      <span class="skillName">维修</span>
+      <span class="skillName">修船</span>
       <span class="skillCd" id="repairCd">READY</span>
     </button>
 
     <button id="shock" class="skill shockSkill">
       <span class="skillIcon">⚡</span>
-      <span class="skillName">电磁</span>
+      <span class="skillName">EMP</span>
       <span class="skillCd" id="shockCd">READY</span>
     </button>
 
     <button id="fire" class="skill heavySkill">
       <span class="skillIcon">💥</span>
-      <span class="skillName">重炮</span>
+      <span class="skillName">舰炮</span>
       <span class="skillCd" id="heavyCd">READY</span>
     </button>
   </div>
 
-  <div id="loading">LOADING HD BATTLEFIELD…</div>
+  <div id="loading">LOADING OCEAN BATTLEFIELD…</div>
+  <button id="upgradeShip">⬆ 升级船只 <span id="upgradeCost">20</span>🪙</button>
 </div>
 <script src="game.js"></script>
 </body></html>

@@ -19,7 +19,7 @@ const pauseMenu=document.createElement('div');
 pauseMenu.id='pauseMenu';
 pauseMenu.innerHTML=`<div class="pauseCard">
   <h2>游戏暂停</h2>
-  <button id="resumeGame">▶ 继续战斗</button>
+  <button id="resumeGame">▶ 继续海战</button>
   <button id="restartGame" class="restart">↻ 重新开始</button>
   <button id="exitGame" class="exit">⏻ 退出游戏</button>
 </div>`;
@@ -35,26 +35,31 @@ exitScreen.innerHTML=`<div class="pauseCard">
 document.body.appendChild(exitScreen);
 
 let keys={},joy={x:0,y:0},wave=1,coins=0,paused=false,shake=0,last=performance.now();
-const WORLD={w:4200,h:5200};
+const WORLD={w:4200,h:6200};
 const camera={x:0,y:0};
-const imgs={}; const sources={
- bg:'assets/battlefield_hd.jpg',player:'assets/player_tank.png',
- e1:'assets/enemy_tank_1.png',e2:'assets/enemy_tank_2.png',e3:'assets/enemy_tank_3.png',boss:'assets/boss_tank.png'
-};
+const imgs={};
+const sources={};
 let loaded=0;
-Object.entries(sources).forEach(([k,s])=>{
- let im=new Image();
- im.onload=()=>{imgs[k]=im;if(++loaded===Object.keys(sources).length){$('#loading').style.display='none';resetWave()}};
- im.onerror=()=>console.error('Asset failed:',s);
- im.src=s;
-});
+// Battle Ship V1 uses procedural ocean/ship art, so it does not require new asset files.
+setTimeout(()=>{ $('#loading').style.display='none'; resetWave(); },120);
 function resize(){
  DPR=Math.min(2,devicePixelRatio||1);W=innerWidth;H=innerHeight;
  c.width=W*DPR;c.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
 }
 addEventListener('resize',resize);resize();
 
-let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:245,r:13};
+const SHIPS=[
+ {name:'木船',cost:20,hp:140,speed:215,damage:28,rate:.58,size:44},
+ {name:'小帆船',cost:45,hp:175,speed:230,damage:34,rate:.54,size:47},
+ {name:'中帆船',cost:80,hp:215,speed:240,damage:42,rate:.50,size:50},
+ {name:'大帆船',cost:130,hp:270,speed:250,damage:52,rate:.46,size:54},
+ {name:'小战艇',cost:210,hp:335,speed:265,damage:64,rate:.41,size:56},
+ {name:'中战艇',cost:320,hp:410,speed:278,damage:78,rate:.36,size:60},
+ {name:'大战艇',cost:480,hp:510,speed:290,damage:94,rate:.31,size:65},
+ {name:'终极战艇',cost:0,hp:650,speed:305,damage:115,rate:.25,size:72}
+];
+let shipTier=0;
+let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:215,r:13};
 let enemies=[],bullets=[],particles=[];
 let laneUnits=[],laneSpawnTimer=0;
 let autoFireTimer=0,autoFireRate=0.48,autoRange=460;
@@ -99,10 +104,10 @@ function drawLaneForces(){
    if(!visible(u,80))continue;
    const sx=screenX(u.x),sy=screenY(u.y);
    ctx.save();ctx.translate(sx,sy);ctx.rotate(u.a+Math.PI/2);
-   ctx.fillStyle=u.team==='ally'?'#45e6cf':'#ef5c58';
+   ctx.fillStyle=u.team==='ally'?'#45a9c6':'#a94046';
    ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=9;
-   ctx.fillRect(-10,-14,20,28);ctx.fillStyle='#17231f';ctx.fillRect(-6,-10,12,18);
-   ctx.fillStyle=u.team==='ally'?'#bafff4':'#ffd0cb';ctx.fillRect(-2,-22,4,14);
+   ctx.beginPath();ctx.moveTo(0,-17);ctx.lineTo(9,-5);ctx.lineTo(7,15);ctx.lineTo(-7,15);ctx.lineTo(-9,-5);ctx.closePath();ctx.fill();
+   ctx.fillStyle='#d6edf2';ctx.fillRect(-4,-5,8,10);
    ctx.restore();
    ctx.fillStyle='#1b1515';ctx.fillRect(sx-15,sy-24,30,4);
    ctx.fillStyle=u.team==='ally'?'#42e5c8':'#ff5b58';ctx.fillRect(sx-15,sy-24,30*Math.max(0,u.hp/u.max),4);
@@ -123,6 +128,9 @@ function updateHUD(){
  $('#wave').textContent='WAVE '+wave;$('#remain').textContent='敌军 '+enemies.length;
  $('#coins').textContent=coins;$('#hpText').textContent=Math.ceil(player.hp)+'/'+player.max;
  $('#hpFill').style.width=Math.max(0,player.hp/player.max*100)+'%';
+ const sl=$('#shipLevel'),uc=$('#upgradeCost');
+ if(sl)sl.textContent=SHIPS[shipTier].name;
+ if(uc)uc.textContent=shipTier<SHIPS.length-1?SHIPS[shipTier].cost:'MAX';
 }
 function updateCamera(snap=false){
  let tx=player.x-W/2,ty=player.y-H/2;
@@ -148,7 +156,7 @@ function fireAt(target,heavy=false){
  bullets.push({
    x:player.x+Math.cos(a)*48,y:player.y+Math.sin(a)*48,
    vx:Math.cos(a)*speed,vy:Math.sin(a)*speed,
-   life:heavy?1700:1500,f:true,heavy:heavy,damage:heavy?95:35
+   life:heavy?1700:1500,f:true,heavy:heavy,damage:heavy?Math.round(SHIPS[shipTier].damage*2.7):SHIPS[shipTier].damage
  });
  muzzle(player.x+Math.cos(a)*50,player.y+Math.sin(a)*50);
  if(heavy){shake=7;for(let i=0;i<18;i++)particles.push({x:player.x+Math.cos(a)*48,y:player.y+Math.sin(a)*48,vx:(Math.random()-.5)*220,vy:(Math.random()-.5)*220,life:350,c:i%2?'#ff6b20':'#fff0a0'})}
@@ -224,7 +232,7 @@ function updateSkillUI(){
 function muzzle(x,y){for(let i=0;i<12;i++)particles.push({x,y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,life:250,c:i%2?'#ffb42d':'#fff2a0'})}
 function boom(x,y){shake=10;for(let i=0;i<34;i++)particles.push({x,y,vx:(Math.random()-.5)*280,vy:(Math.random()-.5)*280,life:350+Math.random()*550,c:i%3?'#ff6b20':'#ffd45a'})}
 function update(dt){
- if(paused||!imgs.bg)return;
+ if(paused)return;
  let mx=joy.x,my=joy.y,mag=Math.hypot(mx,my);
  if(mag>.08){player.x+=mx*player.speed*dt;player.y+=my*player.speed*dt;player.a=Math.atan2(my,mx)}
  player.x=Math.max(60,Math.min(WORLD.w-60,player.x));player.y=Math.max(60,Math.min(WORLD.h-60,player.y));
@@ -270,35 +278,61 @@ function screenY(y){return y-camera.y}
 function visible(o,pad=180){let x=screenX(o.x),y=screenY(o.y);return x>-pad&&x<W+pad&&y>-pad&&y<H+pad}
 function drawSprite(im,o,size){
  let sx=screenX(o.x),sy=screenY(o.y);
+ const enemy=o!==player;
  ctx.save();ctx.translate(sx,sy);ctx.rotate(o.a+Math.PI/2);
- ctx.save();ctx.globalAlpha=.62;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(5,12,size*.32,size*.20,0,0,Math.PI*2);ctx.fill();ctx.restore();
- let ratio=im.width/im.height,h=size,w=size*ratio;
- // Bright outline underneath the sprite so dark tanks remain visible on rocky terrain.
- ctx.save();ctx.globalAlpha=.62;ctx.fillStyle=o===player?'#54fff0':'#ff655f';
- ctx.beginPath();ctx.ellipse(0,0,w*.43,h*.43,0,0,Math.PI*2);ctx.fill();ctx.restore();
- ctx.filter='brightness(1.32) contrast(1.18) saturate(1.18)';
- ctx.shadowColor=o===player?'#00ffe0':'#ff463f';ctx.shadowBlur=12;ctx.shadowOffsetY=5;
- ctx.drawImage(im,-w/2,-h/2,w,h);
- ctx.filter='none';ctx.restore();
+ // wake
+ ctx.globalAlpha=.45;ctx.strokeStyle='#c9f7ff';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(-size*.28,size*.34);ctx.lineTo(-size*.5,size*.8);
+ ctx.moveTo(size*.28,size*.34);ctx.lineTo(size*.5,size*.8);ctx.stroke();
+ ctx.globalAlpha=1;
+ // hull
+ ctx.fillStyle=enemy?'#5b2024':(shipTier<4?'#7b512f':'#435766');
+ ctx.strokeStyle=enemy?'#ff7777':'#9ff5ff';ctx.lineWidth=2;
+ ctx.beginPath();ctx.moveTo(0,-size*.55);ctx.lineTo(size*.34,-size*.18);
+ ctx.lineTo(size*.28,size*.46);ctx.quadraticCurveTo(0,size*.62,-size*.28,size*.46);
+ ctx.lineTo(-size*.34,-size*.18);ctx.closePath();ctx.fill();ctx.stroke();
+ // deck / sail / gun superstructure
+ if(!enemy && shipTier<4){
+   ctx.strokeStyle='#d8c7a2';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-size*.25);ctx.lineTo(0,size*.25);ctx.stroke();
+   ctx.fillStyle='#f1e4c4';ctx.beginPath();ctx.moveTo(2,-size*.20);ctx.lineTo(size*.34,size*.02);ctx.lineTo(2,size*.16);ctx.closePath();ctx.fill();
+ }else{
+   ctx.fillStyle=enemy?'#2d3338':'#a9bac4';ctx.fillRect(-size*.16,-size*.12,size*.32,size*.28);
+   ctx.fillStyle='#17232a';ctx.fillRect(-size*.05,-size*.40,size*.10,size*.34);
+   ctx.beginPath();ctx.arc(0,-size*.16,size*.12,0,Math.PI*2);ctx.fill();
+ }
+ ctx.restore();
 }
 function drawWorldBackground(){
- let bg=imgs.bg;
- // Repeat the HD battlefield as a large world texture instead of stretching one screen.
- const tile=900;
- for(let y=Math.floor(camera.y/tile)*tile;y<camera.y+H+tile;y+=tile){
-   for(let x=Math.floor(camera.x/tile)*tile;x<camera.x+W+tile;x+=tile){
-     if(x<0||y<0||x>=WORLD.w||y>=WORLD.h)continue;
-     let sx=x-camera.x,sy=y-camera.y;
-     ctx.save();
-     // alternate transforms to reduce obvious repetition
-     let flip=((x/tile+y/tile)&1)?-1:1;
-     if(flip<0){ctx.translate(sx+tile,sy);ctx.scale(-1,1);ctx.drawImage(bg,0,0,tile,tile)}
-     else ctx.drawImage(bg,sx,sy,tile,tile);
-     ctx.restore();
+ // Deep ocean
+ ctx.fillStyle='#07506b';ctx.fillRect(0,0,W,H);
+ // Moving-looking wave lines anchored to world coordinates
+ ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle='#b9f4ff';ctx.lineWidth=2;
+ const gap=86;
+ let y0=Math.floor(camera.y/gap)*gap;
+ for(let y=y0;y<camera.y+H+gap;y+=gap){
+   let sy=y-camera.y;
+   ctx.beginPath();
+   for(let x=Math.floor(camera.x/160)*160;x<camera.x+W+180;x+=160){
+     let sx=x-camera.x;
+     ctx.moveTo(sx,sy);
+     ctx.quadraticCurveTo(sx+32,sy-9,sx+64,sy);
    }
+   ctx.stroke();
  }
- // World boundary
- ctx.strokeStyle='#e1b85a88';ctx.lineWidth=8;ctx.strokeRect(-camera.x,-camera.y,WORLD.w,WORLD.h);
+ ctx.restore();
+ // Islands / reefs create sea-lane feeling
+ const islands=[
+  [700,900,260],[3300,1250,300],[1200,2250,330],[3050,2750,260],
+  [650,3650,300],[3450,4050,340],[1450,5000,300],[2900,5350,280]
+ ];
+ for(const [ix,iy,r] of islands){
+   const x=ix-camera.x,y=iy-camera.y;
+   if(x<-r||x>W+r||y<-r||y>H+r)continue;
+   ctx.fillStyle='#d2bd79';ctx.beginPath();ctx.ellipse(x,y,r,r*.62,.25,0,Math.PI*2);ctx.fill();
+   ctx.fillStyle='#3e774c';ctx.beginPath();ctx.ellipse(x,y-8,r*.72,r*.42,.25,0,Math.PI*2);ctx.fill();
+   ctx.strokeStyle='#a7f1ff88';ctx.lineWidth=10;ctx.beginPath();ctx.ellipse(x,y,r*1.06,r*.68,.25,0,Math.PI*2);ctx.stroke();
+ }
+ ctx.strokeStyle='#9eefff88';ctx.lineWidth=8;ctx.strokeRect(-camera.x,-camera.y,WORLD.w,WORLD.h);
 }
 function drawMiniMap(){
  const mw=118,mh=118,x=W-mw-18,y=120;
@@ -311,49 +345,22 @@ function drawMiniMap(){
 }
 
 function drawBattleLanes(){
-  ctx.save();
-  // Three broad strategic lanes, inspired by Battle Tanks-style map flow.
-  const lanes=[WORLD.w*.24,WORLD.w*.50,WORLD.w*.76];
-  ctx.globalAlpha=.20;
-  ctx.strokeStyle='#d8c28b';
-  ctx.lineWidth=110;
-  ctx.setLineDash([90,55]);
-  lanes.forEach(x=>{
-    ctx.beginPath();
-    ctx.moveTo(x-camera.x,0-camera.y);
-    ctx.lineTo(x-camera.x,WORLD.h-camera.y);
-    ctx.stroke();
-  });
-  ctx.setLineDash([]);
-
-  // Friendly/enemy base zones.
-  const baseH=250;
-  const baseW=560;
-  const bx=WORLD.w/2-baseW/2;
-  ctx.globalAlpha=.32;
-  ctx.fillStyle='#0d7b63';
-  ctx.fillRect(bx-camera.x,WORLD.h-baseH-camera.y,baseW,baseH);
-  ctx.fillStyle='#8c2c2c';
-  ctx.fillRect(bx-camera.x,-camera.y,baseW,baseH);
-
-  ctx.globalAlpha=.9;
-  ctx.font='900 24px Arial';
-  ctx.textAlign='center';
-  ctx.fillStyle='#7fffe9';
-  ctx.fillText('ALLY BASE',WORLD.w/2-camera.x,WORLD.h-95-camera.y);
-  ctx.fillStyle='#ff8f8f';
-  ctx.fillText('ENEMY BASE',WORLD.w/2-camera.x,145-camera.y);
-  // Base cores
-  const cx=WORLD.w/2-camera.x;
-  ctx.shadowBlur=24;
-  ctx.shadowColor='#4affdf';ctx.fillStyle='#55e8cf';ctx.beginPath();ctx.arc(cx,WORLD.h-155-camera.y,38,0,Math.PI*2);ctx.fill();
-  ctx.shadowColor='#ff4e4e';ctx.fillStyle='#e95757';ctx.beginPath();ctx.arc(cx,155-camera.y,38,0,Math.PI*2);ctx.fill();
-  ctx.shadowBlur=0;
-  ctx.restore();
+ ctx.save();
+ const lanes=[WORLD.w*.24,WORLD.w*.50,WORLD.w*.76];
+ ctx.globalAlpha=.16;ctx.strokeStyle='#b7f3ff';ctx.lineWidth=90;ctx.setLineDash([80,65]);
+ lanes.forEach(x=>{ctx.beginPath();ctx.moveTo(x-camera.x,-camera.y);ctx.lineTo(x-camera.x,WORLD.h-camera.y);ctx.stroke()});
+ ctx.setLineDash([]);
+ // ports
+ const bw=620,bh=230,bx=WORLD.w/2-bw/2;
+ ctx.globalAlpha=.34;ctx.fillStyle='#22a7a0';ctx.fillRect(bx-camera.x,WORLD.h-bh-camera.y,bw,bh);
+ ctx.fillStyle='#a73b43';ctx.fillRect(bx-camera.x,-camera.y,bw,bh);
+ ctx.globalAlpha=.95;ctx.font='900 23px Arial';ctx.textAlign='center';
+ ctx.fillStyle='#a8fff7';ctx.fillText('ALLY PORT',WORLD.w/2-camera.x,WORLD.h-90-camera.y);
+ ctx.fillStyle='#ffb0b0';ctx.fillText('ENEMY PORT',WORLD.w/2-camera.x,135-camera.y);
+ ctx.restore();
 }
-
 function draw(){
- if(!imgs.bg)return;
+ 
  ctx.save();if(shake)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
  drawWorldBackground();
  drawBattleLanes();
@@ -362,7 +369,7 @@ function draw(){
  drawLaneForces();
  enemies.forEach(e=>{
    if(!visible(e))return;
-   let im=e.boss?imgs.boss:imgs['e'+e.type];drawSprite(im,e,e.boss?64:48);
+   drawSprite(null,e,e.boss?70:48);
    let sx=screenX(e.x),sy=screenY(e.y);
    ctx.save();
    ctx.strokeStyle=e.boss?'#ffb24d':'#ff5d63';ctx.lineWidth=e.boss?3:2;
@@ -371,7 +378,7 @@ function draw(){
    ctx.fillStyle='#351013';ctx.fillRect(sx-36,sy-70,72,8);
    ctx.fillStyle=e.boss?'#ff9a2d':'#ff4047';ctx.fillRect(sx-36,sy-70,72*Math.max(0,e.hp/e.max),8);
  });
- drawSprite(imgs.player,player,55);
+ drawSprite(null,player,SHIPS[shipTier].size);
  let px=screenX(player.x),py=screenY(player.y);
  // High-contrast player locator: soft dark plate + cyan dual ring + direction tick.
  ctx.save();
@@ -409,6 +416,20 @@ J.addEventListener('pointerdown',e=>{pid=e.pointerId;J.classList.add('active');J
 J.addEventListener('pointermove',e=>{if(e.pointerId===pid)moveJoy(e)});
 J.addEventListener('pointerup',e=>{pid=null;joy.x=joy.y=0;J.classList.remove('active');knob.style.transform='translate(0,0)'});
 J.addEventListener('pointercancel',()=>{pid=null;joy.x=joy.y=0;J.classList.remove('active');knob.style.transform='translate(0,0)'});
+
+
+function upgradeShip(){
+ if(paused || shipTier>=SHIPS.length-1)return;
+ const cost=SHIPS[shipTier].cost;
+ if(coins<cost)return;
+ coins-=cost; shipTier++;
+ const s=SHIPS[shipTier];
+ const ratio=Math.max(.35,player.hp/player.max);
+ player.max=s.hp; player.hp=Math.round(s.hp*ratio);
+ player.speed=s.speed; autoFireRate=s.rate;
+ boom(player.x,player.y); updateHUD();
+}
+$('#upgradeShip')?.addEventListener('pointerdown',e=>{e.preventDefault();upgradeShip()});
 
 updateSkillUI();
 
