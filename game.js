@@ -56,6 +56,7 @@ addEventListener('resize',resize);resize();
 
 let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:245,r:13};
 let enemies=[],bullets=[],particles=[];
+let laneUnits=[],laneSpawnTimer=0;
 let autoFireTimer=0,autoFireRate=0.48,autoRange=460;
 let heavyCooldown=0,heavyCooldownMax=5;
 let shockCooldown=0,shockCooldownMax=8,shockRange=250;
@@ -70,10 +71,48 @@ function spawnFarFromPlayer(){
  }while(d<520);
  return {x,y};
 }
+
+function spawnLaneForces(){
+ const lanes=[WORLD.w*.24,WORLD.w*.50,WORLD.w*.76];
+ lanes.forEach((lx,i)=>{
+   laneUnits.push({x:lx-26,y:WORLD.h-330,team:'ally',lane:i,hp:75,max:75,r:11,speed:52,a:-Math.PI/2});
+   laneUnits.push({x:lx+26,y:330,team:'enemy',lane:i,hp:75,max:75,r:11,speed:48,a:Math.PI/2});
+ });
+}
+function updateLaneForces(dt){
+ laneSpawnTimer-=dt;
+ if(laneSpawnTimer<=0){laneSpawnTimer=8;spawnLaneForces()}
+ for(const u of laneUnits){
+   const dir=u.team==='ally'?-1:1;
+   u.y+=dir*u.speed*dt;
+   u.a=dir<0?-Math.PI/2:Math.PI/2;
+   // Nearby opposing lane units damage each other.
+   for(const v of laneUnits){
+     if(v===u||v.team===u.team)continue;
+     if(Math.hypot(v.x-u.x,v.y-u.y)<55){u.hp-=18*dt;v.hp-=18*dt}
+   }
+ }
+ laneUnits=laneUnits.filter(u=>u.hp>0&&u.y>190&&u.y<WORLD.h-190);
+}
+function drawLaneForces(){
+ for(const u of laneUnits){
+   if(!visible(u,80))continue;
+   const sx=screenX(u.x),sy=screenY(u.y);
+   ctx.save();ctx.translate(sx,sy);ctx.rotate(u.a+Math.PI/2);
+   ctx.fillStyle=u.team==='ally'?'#45e6cf':'#ef5c58';
+   ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=9;
+   ctx.fillRect(-10,-14,20,28);ctx.fillStyle='#17231f';ctx.fillRect(-6,-10,12,18);
+   ctx.fillStyle=u.team==='ally'?'#bafff4':'#ffd0cb';ctx.fillRect(-2,-22,4,14);
+   ctx.restore();
+   ctx.fillStyle='#1b1515';ctx.fillRect(sx-15,sy-24,30,4);
+   ctx.fillStyle=u.team==='ally'?'#42e5c8':'#ff5b58';ctx.fillRect(sx-15,sy-24,30*Math.max(0,u.hp/u.max),4);
+ }
+}
+
 function resetWave(){
  player.x=WORLD.w/2;player.y=WORLD.h/2;
  let n=5+Math.min(9,wave*2);
- enemies=[];
+ enemies=[];laneUnits=[];laneSpawnTimer=1;
  for(let i=0;i<n;i++){
    let p=spawnFarFromPlayer(),boss=wave%5===0&&i===0;
    enemies.push({x:p.x,y:p.y,a:Math.PI/2,hp:boss?260:70,max:boss?260:70,r:boss?17:12,boss,cd:500+Math.random()*1000,type:1+i%3});
@@ -193,6 +232,7 @@ function update(dt){
  heavyCooldown=Math.max(0,heavyCooldown-dt);
  shockCooldown=Math.max(0,shockCooldown-dt);
  repairCooldown=Math.max(0,repairCooldown-dt);
+ updateLaneForces(dt);
  const autoTarget=nearestEnemy(autoRange);
  if(autoTarget&&autoFireTimer<=0){
    autoFireTimer=autoFireRate;
@@ -231,10 +271,15 @@ function visible(o,pad=180){let x=screenX(o.x),y=screenY(o.y);return x>-pad&&x<W
 function drawSprite(im,o,size){
  let sx=screenX(o.x),sy=screenY(o.y);
  ctx.save();ctx.translate(sx,sy);ctx.rotate(o.a+Math.PI/2);
- ctx.save();ctx.globalAlpha=.48;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(5,12,size*.28,size*.17,0,0,Math.PI*2);ctx.fill();ctx.restore();
+ ctx.save();ctx.globalAlpha=.62;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(5,12,size*.32,size*.20,0,0,Math.PI*2);ctx.fill();ctx.restore();
  let ratio=im.width/im.height,h=size,w=size*ratio;
- ctx.shadowColor='#000d';ctx.shadowBlur=16;ctx.shadowOffsetY=9;ctx.drawImage(im,-w/2,-h/2,w,h);
- ctx.restore();
+ // Bright outline underneath the sprite so dark tanks remain visible on rocky terrain.
+ ctx.save();ctx.globalAlpha=.62;ctx.fillStyle=o===player?'#54fff0':'#ff655f';
+ ctx.beginPath();ctx.ellipse(0,0,w*.43,h*.43,0,0,Math.PI*2);ctx.fill();ctx.restore();
+ ctx.filter='brightness(1.32) contrast(1.18) saturate(1.18)';
+ ctx.shadowColor=o===player?'#00ffe0':'#ff463f';ctx.shadowBlur=12;ctx.shadowOffsetY=5;
+ ctx.drawImage(im,-w/2,-h/2,w,h);
+ ctx.filter='none';ctx.restore();
 }
 function drawWorldBackground(){
  let bg=imgs.bg;
@@ -298,6 +343,12 @@ function drawBattleLanes(){
   ctx.fillText('ALLY BASE',WORLD.w/2-camera.x,WORLD.h-95-camera.y);
   ctx.fillStyle='#ff8f8f';
   ctx.fillText('ENEMY BASE',WORLD.w/2-camera.x,145-camera.y);
+  // Base cores
+  const cx=WORLD.w/2-camera.x;
+  ctx.shadowBlur=24;
+  ctx.shadowColor='#4affdf';ctx.fillStyle='#55e8cf';ctx.beginPath();ctx.arc(cx,WORLD.h-155-camera.y,38,0,Math.PI*2);ctx.fill();
+  ctx.shadowColor='#ff4e4e';ctx.fillStyle='#e95757';ctx.beginPath();ctx.arc(cx,155-camera.y,38,0,Math.PI*2);ctx.fill();
+  ctx.shadowBlur=0;
   ctx.restore();
 }
 
@@ -308,6 +359,7 @@ function draw(){
  drawBattleLanes();
  let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b44');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0008');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
 
+ drawLaneForces();
  enemies.forEach(e=>{
    if(!visible(e))return;
    let im=e.boss?imgs.boss:imgs['e'+e.type];drawSprite(im,e,e.boss?64:48);
