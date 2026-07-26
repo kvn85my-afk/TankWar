@@ -1,6 +1,6 @@
 
-// ===== V5.1.2 COLLISION + SPAWN HOTFIX =====
-// Fixes: ship-size coastline collision, swept movement, and automatic land rescue.
+// ===== V5.2 GAMEPLAY + AI UPGRADE =====
+// Safer spawn water, island-aware enemy steering, stronger battle FX, denser sea atmosphere.
 // Fix: player can no longer spawn/stay trapped inside an island.
 // ===== V5.1 FULL ASSET EDITION =====
 const V51_ASSET_PATHS=[
@@ -146,6 +146,96 @@ function rescuePlayerFromLand(){
  player.y=safe.y;
  waterSplashes.push({x:player.x,y:player.y,life:700,max:700});
 }
+
+function clearanceFromLand(x,y,r=18){
+ // Approximate free-water clearance. Larger value = safer/open water.
+ let best=99999;
+ for(const i of MAP_ISLANDS){
+   const dx=Math.abs(x-i.x),dy=Math.abs(y-i.y);
+   const edge=Math.max(dx-(i.rx*1.05+r),dy-(i.ry*1.05+r));
+   best=Math.min(best,edge);
+ }
+ for(const q of REEFS){
+   best=Math.min(best,Math.hypot(x-q.x,y-q.y)-(q.r+r));
+ }
+ return best;
+}
+
+function findOpenWaterSpawn(){
+ // Prefer the allied half of the map and keep plenty of room from islands.
+ const candidates=[
+   {x:WORLD.w*.50,y:WORLD.h*.90},
+   {x:WORLD.w*.36,y:WORLD.h*.86},
+   {x:WORLD.w*.64,y:WORLD.h*.86},
+   {x:WORLD.w*.50,y:WORLD.h*.78},
+   {x:WORLD.w*.30,y:WORLD.h*.76},
+   {x:WORLD.w*.70,y:WORLD.h*.76}
+ ];
+ let best=null,bestScore=-Infinity;
+ for(const p of candidates){
+   if(blockedByLand(p.x,p.y,player.r+18))continue;
+   const score=clearanceFromLand(p.x,p.y,player.r+18);
+   if(score>bestScore){bestScore=score;best=p}
+ }
+ return best||findNearestSafeWater(WORLD.w/2,WORLD.h*.84,player.r+18);
+}
+
+function steerAroundLand(o,targetX,targetY,speed,dt){
+ const dx=targetX-o.x,dy=targetY-o.y,d=Math.hypot(dx,dy)||1;
+ const base=Math.atan2(dy,dx);
+ const step=speed*dt;
+ const angles=[0,.28,-.28,.55,-.55,.85,-.85,1.15,-1.15,Math.PI/2,-Math.PI/2];
+ let chosen=null,best=-Infinity;
+
+ for(const off of angles){
+   const a=base+off;
+   const nx=o.x+Math.cos(a)*step,ny=o.y+Math.sin(a)*step;
+   if(blockedByLand(nx,ny,o.r||14))continue;
+
+   // Look further ahead so AI starts turning before hitting the shoreline.
+   const look=72+(o.r||14)*2;
+   const lx=o.x+Math.cos(a)*look,ly=o.y+Math.sin(a)*look;
+   const clear=blockedByLand(lx,ly,(o.r||14)+4)?-300:clearanceFromLand(lx,ly,o.r||14);
+   const progress=-(Math.hypot(targetX-nx,targetY-ny));
+   const score=progress+clear*.22-Math.abs(off)*22;
+   if(score>best){best=score;chosen={nx,ny,a}}
+ }
+ if(chosen){
+   moveWithCollision(o,chosen.nx,chosen.ny);
+   o.a=chosen.a;
+   return true;
+ }
+ return false;
+}
+
+function impactFx(x,y,heavy=false){
+ const count=heavy?28:14;
+ for(let i=0;i<count;i++){
+   const a=Math.random()*Math.PI*2,sp=(heavy?90:55)+Math.random()*(heavy?260:150);
+   particles.push({
+     x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+     life:(heavy?420:260)+Math.random()*260,
+     c:i%3===0?'#fff7c2':i%2?'#ff7a2f':'#ffd35c'
+   });
+ }
+ waterSplashes.push({x,y,life:heavy?900:520,max:heavy?900:520});
+}
+
+function navalExplosion(x,y,power=1){
+ shake=Math.max(shake,7*power);
+ impactFx(x,y,power>1.15);
+ for(let ring=0;ring<3;ring++){
+   const count=18+ring*6;
+   for(let i=0;i<count;i++){
+     const a=i/count*Math.PI*2;
+     const sp=(85+ring*65)*power;
+     particles.push({
+       x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+       life:340+ring*130,c:ring===0?'#fff0a4':ring===1?'#ff8b32':'#d94b24'
+     });
+   }
+ }
+}
 function moveWithCollision(o,nx,ny){
  const r=o.r||14;
  const ox=o.x,oy=o.y;
@@ -224,7 +314,7 @@ function drawLaneForces(){
 }
 
 function resetWave(){
- const spawn=findNearestSafeWater(WORLD.w/2,WORLD.h/2,player.r);
+ const spawn=findOpenWaterSpawn();
  player.x=spawn.x;player.y=spawn.y;
  player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
  let n=10+Math.min(14,wave*3);
@@ -317,7 +407,7 @@ function shockWave(){
          life:300+Math.random()*220,c:i%2?'#6fe8ff':'#d8fbff'
        });
      }
-     if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);boom(e.x,e.y);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)}
+     if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);navalExplosion(e.x,e.y,e.boss?1.45:1);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)}
    }
  }
 
@@ -396,8 +486,13 @@ function update(dt){
 
  enemies.forEach(e=>{
    let dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;e.a=Math.atan2(dy,dx);
-   if(d<720&&d>145){
-     const nx=e.x+dx/d*(e.boss?38:52)*dt,ny=e.y+dy/d*(e.boss?38:52)*dt;
+   if(d<760&&d>150){
+     const chaseSpeed=e.boss?40:56;
+     steerAroundLand(e,player.x,player.y,chaseSpeed,dt);
+   }else if(d<=150){
+     // Circle slightly at close range instead of ramming into the player/shore.
+     const orbit=e.a+(e.type%2?1:-1)*Math.PI/2;
+     const nx=e.x+Math.cos(orbit)*32*dt,ny=e.y+Math.sin(orbit)*32*dt;
      moveWithCollision(e,nx,ny);
    }
    e.cd-=dt*1000;
@@ -406,14 +501,23 @@ function update(dt){
      bullets.push({x:e.x,y:e.y,vx:dx/d*270,vy:dy/d*270,life:2600,f:false});
    }
  });
- bullets.forEach(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt*1000});
+ bullets.forEach(b=>{
+   b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt*1000;
+   if(Math.random()<dt*(b.heavy?28:13)){
+     particles.push({
+       x:b.x-b.vx*.025,y:b.y-b.vy*.025,
+       vx:(Math.random()-.5)*24,vy:(Math.random()-.5)*24,
+       life:b.heavy?260:160,c:b.f?'#e6f7ff':'#ffd0b4'
+     });
+   }
+ });
  bullets.forEach(b=>{
    if(b.life<=0)return;
    if(b.f){
      for(let e of enemies)if(Math.hypot(b.x-e.x,b.y-e.y)<e.r+9){
-       e.hp-=(b.damage||35);b.life=0;muzzle(b.x,b.y);if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);boom(e.x,e.y);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)};break;
+       e.hp-=(b.damage||35);b.life=0;impactFx(b.x,b.y,!!b.heavy);if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);navalExplosion(e.x,e.y,e.boss?1.45:1);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)};break;
      }
-   }else if(Math.hypot(b.x-player.x,b.y-player.y)<player.r+7){player.hp-=8;b.life=0;shake=5}
+   }else if(Math.hypot(b.x-player.x,b.y-player.y)<player.r+7){player.hp-=8;b.life=0;shake=5;impactFx(b.x,b.y,false)}
  });
  enemies=enemies.filter(e=>e.hp>0);
  bullets=bullets.filter(b=>b.life>0&&b.x>-80&&b.x<WORLD.w+80&&b.y>-80&&b.y<WORLD.h+80);
@@ -440,6 +544,14 @@ function update(dt){
    s.y+=Math.sin(s.a)*s.speed*dt;s.life-=dt*1000;
  });
  ambientShips=ambientShips.filter(s=>s.life>0&&s.y>80&&s.y<WORLD.h-80);
+
+ // Occasional distant battle flashes make the sea feel alive.
+ if(Math.random()<dt*.9){
+   const fx=player.x+(Math.random()-.5)*900,fy=player.y+(Math.random()-.5)*1200;
+   if(fx>80&&fx<WORLD.w-80&&fy>80&&fy<WORLD.h-80&&!blockedByLand(fx,fy,8)){
+     particles.push({x:fx,y:fy,vx:0,vy:0,life:120,c:'#ffd783'});
+   }
+ }
 
  if(player.hp<=0){player.hp=player.max;coins=Math.max(0,coins-10);resetWave()}
  if(enemies.length===0){wave++;resetWave()}
