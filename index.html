@@ -2,15 +2,15 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Battle Ship Mobile - Warcraft Style V2.3</title>
-<link rel="stylesheet" href="style.css?v=23">
+<title>Battle Ship Mobile - Warcraft Style V3.0</title>
+<link rel="stylesheet" href="style.css?v=30">
 </head>
 <body>
 <div id="mainMenu" class="mainMenu show">
   <div class="mainMenuCard">
     <div class="gameLogo">BATTLE SHIP</div>
     <div class="gameSub">海战</div>
-    <div class="versionTag">版本 V2.3</div>
+    <div class="versionTag">版本 V3.0</div>
     <button id="startGameBtn">▶ 开始游戏</button>
   </div>
 </div>
@@ -46,11 +46,15 @@
   </div>
 
   <div id="loading">LOADING BATTLE SHIPS WORLD…</div>
-  <div id="progressPanel">
+  <div id="battleInfo">
+  <span id="zoneName">翡翠海峡</span>
+  <small id="objective">摧毁敌舰 · 收集金币 · 升级战船</small>
+</div>
+<div id="progressPanel">
   <b id="progressTitle">木船</b>
   <span id="progressText">下一阶：小帆船</span>
 </div>
 <button id="upgradeShip">⬆ 升级船只 <span id="upgradeCost">20</span>🪙</button>
 </div>
-<script src="game.js?v=23"></script>
+<script src="game.js?v=30"></script>
 </body></html>
