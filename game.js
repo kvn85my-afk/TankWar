@@ -35,7 +35,7 @@ exitScreen.innerHTML=`<div class="pauseCard">
 document.body.appendChild(exitScreen);
 
 let keys={},joy={x:0,y:0},wave=1,coins=0,paused=false,shake=0,last=performance.now();
-const WORLD={w:3000,h:3000};
+const WORLD={w:4200,h:5200};
 const camera={x:0,y:0};
 const imgs={}; const sources={
  bg:'assets/battlefield_hd.jpg',player:'assets/player_tank.png',
@@ -54,9 +54,9 @@ function resize(){
 }
 addEventListener('resize',resize);resize();
 
-let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:235,r:16};
+let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:245,r:13};
 let enemies=[],bullets=[],particles=[];
-let autoFireTimer=0,autoFireRate=0.52,autoRange=520;
+let autoFireTimer=0,autoFireRate=0.48,autoRange=460;
 let heavyCooldown=0,heavyCooldownMax=5;
 let shockCooldown=0,shockCooldownMax=8,shockRange=250;
 let repairCooldown=0,repairCooldownMax=12;
@@ -72,11 +72,11 @@ function spawnFarFromPlayer(){
 }
 function resetWave(){
  player.x=WORLD.w/2;player.y=WORLD.h/2;
- let n=6+Math.min(10,wave*2);
+ let n=5+Math.min(9,wave*2);
  enemies=[];
  for(let i=0;i<n;i++){
    let p=spawnFarFromPlayer(),boss=wave%5===0&&i===0;
-   enemies.push({x:p.x,y:p.y,a:Math.PI/2,hp:boss?260:70,max:boss?260:70,r:boss?20:15,boss,cd:500+Math.random()*1000,type:1+i%3});
+   enemies.push({x:p.x,y:p.y,a:Math.PI/2,hp:boss?260:70,max:boss?260:70,r:boss?17:12,boss,cd:500+Math.random()*1000,type:1+i%3});
  }
  updateCamera(true);updateHUD();
 }
@@ -272,14 +272,14 @@ function draw(){
 
  enemies.forEach(e=>{
    if(!visible(e))return;
-   let im=e.boss?imgs.boss:imgs['e'+e.type];drawSprite(im,e,e.boss?69:52);
+   let im=e.boss?imgs.boss:imgs['e'+e.type];drawSprite(im,e,e.boss?58:42);
    let sx=screenX(e.x),sy=screenY(e.y);
    ctx.fillStyle='#351013';ctx.fillRect(sx-36,sy-70,72,8);
    ctx.fillStyle=e.boss?'#ff9a2d':'#ff4047';ctx.fillRect(sx-36,sy-70,72*Math.max(0,e.hp/e.max),8);
  });
- drawSprite(imgs.player,player,56);
+ drawSprite(imgs.player,player,44);
  let px=screenX(player.x),py=screenY(player.y);
- ctx.strokeStyle='#39fff0bb';ctx.lineWidth=2;ctx.shadowColor='#35fff0';ctx.shadowBlur=18;ctx.beginPath();ctx.arc(px,py,24,0,7);ctx.stroke();ctx.shadowBlur=0;
+ ctx.strokeStyle='#39fff0bb';ctx.lineWidth=2;ctx.shadowColor='#35fff0';ctx.shadowBlur=18;ctx.beginPath();ctx.arc(px,py,20,0,7);ctx.stroke();ctx.shadowBlur=0;
 
  bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#8ffcff':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=18;ctx.lineWidth=b.heavy?8:4;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
  particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
@@ -308,23 +308,3 @@ J.addEventListener('pointercancel',()=>{pid=null;joy.x=joy.y=0;J.classList.remov
 updateSkillUI();
 
 
-// ===== Landscape mode helper =====
-async function tryLandscapeLock(){
-  try{
-    if(document.documentElement.requestFullscreen && !document.fullscreenElement){
-      await document.documentElement.requestFullscreen();
-    }
-    if(screen.orientation && screen.orientation.lock){
-      await screen.orientation.lock('landscape');
-    }
-  }catch(e){
-    // Mobile browsers may refuse orientation lock unless installed/fullscreen.
-  }
-}
-let landscapeTried=false;
-document.addEventListener('pointerdown',()=>{
-  if(!landscapeTried){
-    landscapeTried=true;
-    tryLandscapeLock();
-  }
-},{once:true});
