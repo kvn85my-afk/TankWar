@@ -27,7 +27,7 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent}
 
 /* ===== Portrait joystick ===== */
 #joy{
- position:fixed;z-index:6;left:18px;bottom:max(24px,env(safe-area-inset-bottom));width:126px;height:126px;border-radius:50%;
+ position:fixed;z-index:6;left:18px;bottom:max(24px,env(safe-area-inset-bottom));width:108px;height:108px;border-radius:50%;
  border:2px solid #67ffe788;
  background:radial-gradient(circle at 50% 50%,#0b302b66 0 26%,#06130fbb 27% 58%,#03100dcc 59% 100%);
  box-shadow:0 14px 35px #000d,0 0 22px #00ffd54a,inset 0 0 18px #00f0c322,inset 0 0 50px #000;
@@ -38,14 +38,14 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent}
 #joy:after{inset:32px;border:1px dashed #8ff8e655;opacity:.75}
 #joy .joyRing{position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);border-radius:50%;background:#8affef22;box-shadow:0 0 20px #00ffe6aa}
 #joy i{
- position:absolute;left:50%;top:50%;width:48px;height:48px;margin-left:-24px;margin-top:-24px;border-radius:50%;
+ position:absolute;left:50%;top:50%;width:42px;height:42px;margin-left:-21px;margin-top:-21px;border-radius:50%;
  background:radial-gradient(circle at 33% 28%,#d9fff4 0 8%,#77baa8 20%,#315b50 52%,#132c26 100%);
  border:2px solid #c9fff1aa;box-shadow:0 7px 18px #000d,0 0 18px #4dffe388,inset 0 0 10px #ffffff44
 }
 
 /* ===== Portrait skill cluster ===== */
 #skills{
- position:fixed;z-index:6;right:14px;bottom:max(22px,env(safe-area-inset-bottom));width:174px;height:178px;pointer-events:none
+ position:fixed;z-index:6;right:14px;bottom:max(22px,env(safe-area-inset-bottom));width:158px;height:164px;pointer-events:none
 }
 .skill{
  position:absolute;pointer-events:auto;border-radius:50%;color:#fff;font-weight:900;display:flex;flex-direction:column;
@@ -54,21 +54,21 @@ button{font-family:inherit;-webkit-tap-highlight-color:transparent}
 .skill:active{transform:scale(.94)}
 .skillIcon{display:block;line-height:1}.skillName{display:block;margin-top:2px;line-height:1}.skillCd{display:block;margin-top:3px;font-size:8px;color:#dffff7}
 .heavySkill{
- right:0;bottom:0;width:92px;height:92px;border:5px solid #ff9290;
+ right:0;bottom:0;width:82px;height:82px;border:5px solid #ff9290;
  background:radial-gradient(circle at 35% 28%,#ff5b56,#b90016 70%,#5f0008 100%);
  box-shadow:0 0 32px #ff314b88,0 10px 28px #000c,inset 0 0 28px #fff5
 }
-.heavySkill .skillIcon{font-size:23px}.heavySkill .skillName{font-size:18px}
-.shockSkill{right:86px;bottom:94px;width:68px;height:68px;border:4px solid #8dd8ff;background:radial-gradient(circle at 35% 28%,#56c7ff,#1764b2 66%,#082a58 100%)}
-.repairSkill{right:98px;bottom:18px;width:68px;height:68px;border:4px solid #76f2bc;background:radial-gradient(circle at 35% 30%,#36db91,#077348 68%,#033a24 100%)}
-.shockSkill .skillIcon,.repairSkill .skillIcon{font-size:18px}.shockSkill .skillName,.repairSkill .skillName{font-size:12px}
+.heavySkill .skillIcon{font-size:21px}.heavySkill .skillName{font-size:16px}
+.shockSkill{right:76px;bottom:86px;width:60px;height:60px;border:4px solid #8dd8ff;background:radial-gradient(circle at 35% 28%,#56c7ff,#1764b2 66%,#082a58 100%)}
+.repairSkill{right:84px;bottom:14px;width:60px;height:60px;border:4px solid #76f2bc;background:radial-gradient(circle at 35% 30%,#36db91,#077348 68%,#033a24 100%)}
+.shockSkill .skillIcon,.repairSkill .skillIcon{font-size:16px}.shockSkill .skillName,.repairSkill .skillName{font-size:11px}
 .skill.cooling{filter:saturate(.55) brightness(.7)}.skill.cooling:after{content:"";position:absolute;inset:0;background:#0008;pointer-events:none}
 #loading{position:fixed;z-index:20;inset:0;display:flex;align-items:center;justify-content:center;background:#06100d;color:#f1d17b;font-weight:900;letter-spacing:2px;text-align:center;padding:24px}
 
 @media (max-width:390px){
  #hud{grid-template-columns:minmax(108px,1.3fr) .9fr auto auto;padding-left:8px;padding-right:8px;gap:5px}
  .wave b{font-size:16px}.coins{font-size:15px}#pause{width:38px;height:38px}
- #joy{width:116px;height:116px;left:12px}
+ #joy{width:100px;height:100px;left:10px}
  #skills{right:8px;transform:scale(.92);transform-origin:right bottom}
 }
 @media (orientation:landscape){
