@@ -1,5 +1,39 @@
 const c=document.querySelector('#c'),ctx=c.getContext('2d');let W,H,DPR;
 const $=s=>document.querySelector(s);
+// ===== Pause / Restart / Exit Menu =====
+const pauseStyle=document.createElement('style');
+pauseStyle.textContent=`
+#pauseMenu,#exitScreen{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:24px;background:#000c}
+#pauseMenu.show,#exitScreen.show{display:flex}
+.pauseCard{width:min(88vw,390px);padding:22px;border-radius:20px;background:linear-gradient(160deg,#0d1b16,#07100d);
+border:1px solid #ffffff22;box-shadow:0 24px 70px #000d;text-align:center}
+.pauseCard h2{margin:0 0 16px;font-size:30px}
+.pauseCard p{color:#cbd7d1;line-height:1.55}
+.pauseCard button{display:block;width:100%;margin:10px 0;padding:15px;border:0;border-radius:13px;font-weight:900;font-size:18px;color:#fff;background:#1c4938}
+.pauseCard .restart{background:#805c18}
+.pauseCard .exit{background:#8d2026}
+`;
+document.head.appendChild(pauseStyle);
+
+const pauseMenu=document.createElement('div');
+pauseMenu.id='pauseMenu';
+pauseMenu.innerHTML=`<div class="pauseCard">
+  <h2>游戏暂停</h2>
+  <button id="resumeGame">▶ 继续战斗</button>
+  <button id="restartGame" class="restart">↻ 重新开始</button>
+  <button id="exitGame" class="exit">⏻ 退出游戏</button>
+</div>`;
+document.body.appendChild(pauseMenu);
+
+const exitScreen=document.createElement('div');
+exitScreen.id='exitScreen';
+exitScreen.innerHTML=`<div class="pauseCard">
+  <h2>已退出游戏</h2>
+  <p>游戏已经停止。由于这是浏览器网页，系统通常不允许网页强制关闭当前标签页。</p>
+  <button id="backToGame">重新进入游戏</button>
+</div>`;
+document.body.appendChild(exitScreen);
+
 let keys={},joy={x:0,y:0},wave=1,coins=0,paused=false,shake=0,last=performance.now();
 const imgs={}; const sources={
  bg:'assets/battlefield_hd.jpg',player:'assets/player_tank.png',
@@ -64,7 +98,43 @@ function draw(){
  ctx.restore()
 }
 function loop(t){let dt=Math.min(.033,(t-last)/1000);last=t;update(dt);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
-$('#fire').addEventListener('pointerdown',e=>{e.preventDefault();fire()});$('#repair').addEventListener('pointerdown',e=>{e.preventDefault();player.hp=Math.min(player.max,player.hp+35);updateHUD()});$('#pause').onclick=()=>paused=!paused;
+$('#fire').addEventListener('pointerdown',e=>{e.preventDefault();fire()});$('#repair').addEventListener('pointerdown',e=>{e.preventDefault();player.hp=Math.min(player.max,player.hp+35);updateHUD()});$('#pause').onclick=()=>{
+  paused=true;
+  pauseMenu.classList.add('show');
+};
+$('#resumeGame').onclick=()=>{
+  pauseMenu.classList.remove('show');
+  paused=false;
+  last=performance.now();
+};
+$('#restartGame').onclick=()=>{
+  pauseMenu.classList.remove('show');
+  paused=false;
+  wave=1;
+  coins=0;
+  player.hp=player.max;
+  bullets=[];
+  particles=[];
+  resetWave();
+  last=performance.now();
+};
+$('#exitGame').onclick=()=>{
+  paused=true;
+  pauseMenu.classList.remove('show');
+  exitScreen.classList.add('show');
+  try{window.close()}catch(e){}
+};
+$('#backToGame').onclick=()=>{
+  exitScreen.classList.remove('show');
+  paused=false;
+  wave=1;
+  coins=0;
+  player.hp=player.max;
+  bullets=[];
+  particles=[];
+  resetWave();
+  last=performance.now();
+};
 let J=$('#joy'),knob=J.querySelector('i'),pid=null;
 function moveJoy(e){let r=J.getBoundingClientRect(),x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2),m=Math.hypot(x,y),max=47;if(m>max){x=x/m*max;y=y/m*max}joy.x=x/max;joy.y=y/max;knob.style.transform=`translate(${x}px,${y}px)`}
 J.addEventListener('pointerdown',e=>{pid=e.pointerId;J.setPointerCapture(pid);moveJoy(e)});J.addEventListener('pointermove',e=>{if(e.pointerId===pid)moveJoy(e)});J.addEventListener('pointerup',e=>{pid=null;joy.x=joy.y=0;knob.style.transform='translate(0,0)'});
