@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>Tank War ULTIMATE 9.0</title>
+<title>Tank War ULTIMATE 10.0</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,9 +14,29 @@
     <div class="coins">🪙 <b id="coins">0</b></div>
     <button id="pause">Ⅱ</button>
   </div>
-  <div id="joy"><i></i></div>
-  <button id="repair">✚</button>
-  <button id="fire"><span>💥</span>重炮</button>
+
+  <div id="joy"><div class="joyRing"></div><i></i></div>
+
+  <div id="skills">
+    <button id="repair" class="skill repairSkill">
+      <span class="skillIcon">🔧</span>
+      <span class="skillName">维修</span>
+      <span class="skillCd" id="repairCd">READY</span>
+    </button>
+
+    <button id="shock" class="skill shockSkill">
+      <span class="skillIcon">⚡</span>
+      <span class="skillName">电磁</span>
+      <span class="skillCd" id="shockCd">READY</span>
+    </button>
+
+    <button id="fire" class="skill heavySkill">
+      <span class="skillIcon">💥</span>
+      <span class="skillName">重炮</span>
+      <span class="skillCd" id="heavyCd">READY</span>
+    </button>
+  </div>
+
   <div id="loading">LOADING HD BATTLEFIELD…</div>
 </div>
 <script src="game.js"></script>

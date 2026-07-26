@@ -1,13 +1,118 @@
-*{box-sizing:border-box}html,body{margin:0;background:#020705;overflow:hidden;font-family:Arial,sans-serif;color:white;touch-action:none}
-#game,#c{position:fixed;inset:0;width:100%;height:100%}#c{display:block}
-#hud{position:fixed;z-index:5;top:0;left:0;right:0;height:112px;padding:18px 18px;display:flex;align-items:center;gap:14px;background:linear-gradient(#06100dda,transparent)}
-.hpbox{width:38%;position:relative}.hpbox>span{position:absolute;z-index:2;left:10px;top:8px;font-weight:800;font-size:13px;text-shadow:0 1px 3px #000}
-.hp{height:28px;border:3px solid #7b504f;border-radius:16px;background:#3a171b;overflow:hidden;box-shadow:0 2px 10px #0009 inset}.hp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#00d45b,#a5e51e)}
-.wave{text-align:center;flex:1}.wave b{display:block;font-size:25px}.wave small{font-size:15px;font-weight:700}.coins{font-size:23px;white-space:nowrap}
+*{box-sizing:border-box}
+html,body{margin:0;background:#020705;overflow:hidden;font-family:Arial,sans-serif;color:white;touch-action:none}
+button{font-family:inherit}
+#game,#c{position:fixed;inset:0;width:100%;height:100%}
+#c{display:block}
+
+#hud{
+ position:fixed;z-index:5;top:0;left:0;right:0;height:112px;padding:18px;
+ display:flex;align-items:center;gap:14px;
+ background:linear-gradient(#06100dda,transparent)
+}
+.hpbox{width:38%;position:relative}
+.hpbox>span{position:absolute;z-index:2;left:10px;top:8px;font-weight:800;font-size:13px;text-shadow:0 1px 3px #000}
+.hp{height:28px;border:3px solid #7b504f;border-radius:16px;background:#3a171b;overflow:hidden;box-shadow:0 2px 10px #0009 inset}
+.hp i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#00d45b,#a5e51e)}
+.wave{text-align:center;flex:1}
+.wave b{display:block;font-size:25px}
+.wave small{font-size:15px;font-weight:700}
+.coins{font-size:23px;white-space:nowrap}
 #pause{width:62px;height:62px;border:0;border-radius:18px;background:#071b17dd;color:#fff;font-size:28px}
-#joy{position:fixed;z-index:6;left:38px;bottom:46px;width:150px;height:150px;border-radius:50%;border:3px solid #a7d7ca44;background:radial-gradient(circle,#16362f88,#020807bb);box-shadow:0 12px 35px #000c,inset 0 0 35px #000}
-#joy i{position:absolute;left:49px;top:49px;width:48px;height:48px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9bbab0,#344d45);border:2px solid #d9eee777;box-shadow:0 5px 16px #000b}
-#fire{position:fixed;z-index:6;right:38px;bottom:48px;width:150px;height:150px;border-radius:50%;border:6px solid #ff7b79;background:radial-gradient(circle at 40% 30%,#ff413f,#b40010 72%);color:#fff;font-size:28px;font-weight:900;box-shadow:inset 0 0 28px #fff6,0 0 38px #ff2b3f99,0 12px 30px #000b}
-#fire span{display:block;font-size:25px;transform:rotate(-45deg)}
-#repair{position:fixed;z-index:6;right:205px;bottom:56px;width:82px;height:82px;border-radius:50%;border:4px solid #73f2bc;background:radial-gradient(circle,#19bd72,#05643f);color:white;font-size:36px;font-weight:900;box-shadow:0 0 25px #00d77c88}
-#loading{position:fixed;z-index:20;inset:0;display:flex;align-items:center;justify-content:center;background:#06100d;color:#f1d17b;font-weight:900;letter-spacing:2px}
+
+/* ===== Premium joystick ===== */
+#joy{
+ position:fixed;z-index:6;left:24px;bottom:28px;width:156px;height:156px;border-radius:50%;
+ border:2px solid #67ffe788;
+ background:
+  radial-gradient(circle at 50% 50%,#0b302b66 0 26%,#06130fbb 27% 58%,#03100dcc 59% 100%);
+ box-shadow:
+  0 14px 35px #000d,
+  0 0 22px #00ffd54a,
+  inset 0 0 18px #00f0c322,
+  inset 0 0 50px #000;
+ backdrop-filter:blur(2px)
+}
+#joy:before,#joy:after{
+ content:"";position:absolute;inset:15px;border-radius:50%;pointer-events:none
+}
+#joy:before{
+ border:1px solid #75f7df44;
+ box-shadow:inset 0 0 16px #00e7cb22
+}
+#joy:after{
+ inset:40px;border:1px dashed #8ff8e655;opacity:.75
+}
+#joy .joyRing{
+ position:absolute;left:50%;top:50%;width:18px;height:18px;transform:translate(-50%,-50%);
+ border-radius:50%;background:#8affef22;box-shadow:0 0 20px #00ffe6aa
+}
+#joy i{
+ position:absolute;left:50%;top:50%;width:58px;height:58px;margin-left:-29px;margin-top:-29px;
+ border-radius:50%;
+ background:
+  radial-gradient(circle at 33% 28%,#d9fff4 0 8%,#77baa8 20%,#315b50 52%,#132c26 100%);
+ border:2px solid #c9fff1aa;
+ box-shadow:0 7px 18px #000d,0 0 18px #4dffe388,inset 0 0 10px #ffffff44;
+ transition:box-shadow .08s ease
+}
+#joy.active{
+ box-shadow:0 14px 35px #000d,0 0 34px #00ffe577,inset 0 0 22px #00f0c344,inset 0 0 50px #000
+}
+#joy.active i{box-shadow:0 7px 18px #000d,0 0 30px #69ffecbb,inset 0 0 12px #ffffff55}
+
+/* ===== Skill cluster ===== */
+#skills{
+ position:fixed;z-index:6;right:20px;bottom:24px;
+ width:230px;height:190px;
+ pointer-events:none
+}
+.skill{
+ position:absolute;pointer-events:auto;border-radius:50%;color:#fff;font-weight:900;
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ text-shadow:0 2px 5px #000;
+ box-shadow:0 10px 28px #000b,inset 0 0 24px #ffffff22;
+ overflow:hidden
+}
+.skill:active{transform:scale(.94)}
+.skillIcon{display:block;line-height:1}
+.skillName{display:block;margin-top:3px;line-height:1}
+.skillCd{display:block;margin-top:5px;font-size:10px;letter-spacing:.3px;color:#dffff7}
+
+.heavySkill{
+ right:0;bottom:0;width:118px;height:118px;border:5px solid #ff9290;
+ background:radial-gradient(circle at 35% 28%,#ff5b56,#b90016 70%,#5f0008 100%);
+ box-shadow:0 0 32px #ff314b88,0 10px 28px #000c,inset 0 0 28px #fff5
+}
+.heavySkill .skillIcon{font-size:27px}
+.heavySkill .skillName{font-size:22px}
+
+.shockSkill{
+ right:118px;bottom:82px;width:82px;height:82px;border:4px solid #8dd8ff;
+ background:radial-gradient(circle at 35% 28%,#56c7ff,#1764b2 66%,#082a58 100%);
+ box-shadow:0 0 24px #40aaff77,0 10px 24px #000a,inset 0 0 20px #ffffff33
+}
+.shockSkill .skillIcon{font-size:22px}
+.shockSkill .skillName{font-size:15px}
+
+.repairSkill{
+ right:125px;bottom:4px;width:82px;height:82px;border:4px solid #76f2bc;
+ background:radial-gradient(circle at 35% 30%,#36db91,#077348 68%,#033a24 100%);
+ box-shadow:0 0 24px #00d77c66,0 10px 24px #000a,inset 0 0 20px #ffffff33
+}
+.repairSkill .skillIcon{font-size:22px}
+.repairSkill .skillName{font-size:15px}
+
+.skill.cooling{filter:saturate(.55) brightness(.7)}
+.skill.cooling:after{
+ content:"";position:absolute;inset:0;background:#0008;pointer-events:none
+}
+
+#loading{
+ position:fixed;z-index:20;inset:0;display:flex;align-items:center;justify-content:center;
+ background:#06100d;color:#f1d17b;font-weight:900;letter-spacing:2px
+}
+
+@media (max-width:430px){
+ #joy{left:16px;bottom:20px;width:142px;height:142px}
+ #skills{right:12px;bottom:18px;transform:scale(.92);transform-origin:right bottom}
+}
