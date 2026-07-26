@@ -63,7 +63,7 @@ const SHIPS=[
 ];
 let shipTier=0;
 let player={x:WORLD.w/2,y:WORLD.h/2,a:-Math.PI/2,hp:140,max:140,speed:215,r:13};
-let enemies=[],bullets=[],particles=[];
+let enemies=[],bullets=[],particles=[],floatingTexts=[];
 let laneUnits=[],laneSpawnTimer=0;
 let autoFireTimer=0,autoFireRate=0.48,autoRange=460;
 let heavyCooldown=0,heavyCooldownMax=5;
@@ -201,7 +201,7 @@ function shockWave(){
          life:300+Math.random()*220,c:i%2?'#6fe8ff':'#d8fbff'
        });
      }
-     if(e.hp<=0){coins+=e.boss?30:5;boom(e.x,e.y)}
+     if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);boom(e.x,e.y)}
    }
  }
 
@@ -242,6 +242,18 @@ function updateSkillUI(){
  $('#shock')?.classList.toggle('cooling',shockCooldown>0);
  $('#repair')?.classList.toggle('cooling',repairCooldown>0);
 }
+
+function awardCoins(amount,x=player.x,y=player.y){
+ coins += amount;
+ floatingTexts.push({
+   x:x,y:y-34,
+   text:'+$'+amount,
+   life:1100,maxLife:1100,
+   vy:-42
+ });
+ updateHUD();
+}
+
 function muzzle(x,y){for(let i=0;i<12;i++)particles.push({x,y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,life:250,c:i%2?'#ffb42d':'#fff2a0'})}
 function boom(x,y){shake=10;for(let i=0;i<34;i++)particles.push({x,y,vx:(Math.random()-.5)*280,vy:(Math.random()-.5)*280,life:350+Math.random()*550,c:i%3?'#ff6b20':'#ffd45a'})}
 function update(dt){
@@ -274,7 +286,7 @@ function update(dt){
    if(b.life<=0)return;
    if(b.f){
      for(let e of enemies)if(Math.hypot(b.x-e.x,b.y-e.y)<e.r+9){
-       e.hp-=(b.damage||35);b.life=0;muzzle(b.x,b.y);if(e.hp<=0){coins+=e.boss?30:5;boom(e.x,e.y)};break;
+       e.hp-=(b.damage||35);b.life=0;muzzle(b.x,b.y);if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);boom(e.x,e.y)};break;
      }
    }else if(Math.hypot(b.x-player.x,b.y-player.y)<player.r+7){player.hp-=8;b.life=0;shake=5}
  });
@@ -282,6 +294,8 @@ function update(dt){
  bullets=bullets.filter(b=>b.life>0&&b.x>-80&&b.x<WORLD.w+80&&b.y>-80&&b.y<WORLD.h+80);
  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.96;p.vy*=.96;p.life-=dt*1000});
  particles=particles.filter(p=>p.life>0);
+ floatingTexts.forEach(f=>{f.y+=f.vy*dt;f.life-=dt*1000});
+ floatingTexts=floatingTexts.filter(f=>f.life>0);
  if(player.hp<=0){player.hp=player.max;coins=Math.max(0,coins-10);resetWave()}
  if(enemies.length===0){wave++;resetWave()}
  updateCamera();updateHUD();updateSkillUI();shake*=.88;
@@ -434,6 +448,22 @@ function draw(){
 
  bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#8ffcff':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=18;ctx.lineWidth=b.heavy?8:4;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
  particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
+ floatingTexts.forEach(f=>{
+   let x=screenX(f.x),y=screenY(f.y);
+   let a=Math.max(0,Math.min(1,f.life/f.maxLife));
+   ctx.save();
+   ctx.globalAlpha=Math.min(1,a*1.7);
+   ctx.textAlign='center';
+   ctx.font='900 22px Arial';
+   ctx.lineWidth=5;
+   ctx.strokeStyle='#09230f';
+   ctx.shadowColor='#ffd84d';
+   ctx.shadowBlur=12;
+   ctx.strokeText(f.text,x,y);
+   ctx.fillStyle='#ffe35b';
+   ctx.fillText(f.text,x,y);
+   ctx.restore();
+ });
  drawMiniMap();
  ctx.restore();
 }
@@ -466,7 +496,7 @@ $('#mainMenuBtn')?.addEventListener('pointerdown',e=>{
 
 $('#pause').onclick=()=>{paused=true;pauseMenu.classList.add('show')};
 $('#resumeGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;last=performance.now()};
-$('#restartGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];autoFireTimer=0;heavyCooldown=0;shockCooldown=0;repairCooldown=0;resetWave();updateSkillUI();last=performance.now()};
+$('#restartGame').onclick=()=>{pauseMenu.classList.remove('show');paused=false;wave=1;coins=0;player.hp=player.max;bullets=[];particles=[];floatingTexts=[];autoFireTimer=0;heavyCooldown=0;shockCooldown=0;repairCooldown=0;resetWave();updateSkillUI();last=performance.now()};
 $('#exitGame').onclick=()=>{paused=true;pauseMenu.classList.remove('show');exitScreen.classList.add('show');try{window.close()}catch(e){}};
 $('#backToGame').onclick=()=>{exitScreen.classList.remove('show');showMainMenu()};
 
