@@ -138,3 +138,16 @@ body{background:#031923}
 #battleInfo span{display:block;color:#f1d27b;font-size:11px;font-weight:900;letter-spacing:.5px}
 #battleInfo small{display:block;color:#d9ecf2;font-size:8px;margin-top:1px}
 @media(max-width:390px){#battleInfo{top:76px;transform:translateX(-50%) scale(.92)}}
+
+/* ===== V4.0 Full Visual Pass ===== */
+#battleInfo{
+ background:linear-gradient(180deg,#14251ed9,#07140fdf);
+ border:1px solid #cdb56b99;box-shadow:0 8px 25px #000b,inset 0 0 16px #d6bb5520
+}
+#battleInfo span{font-family:Georgia,serif;font-size:13px;color:#f5d77d;text-shadow:0 2px 3px #000}
+#battleInfo small{font-size:9px;color:#e6eee6}
+#hud{filter:drop-shadow(0 5px 10px #0008)}
+#minimap{box-shadow:0 0 0 2px #5e4b2c,0 0 18px #000b,inset 0 0 18px #000}
+
+#battleInfo{top:78px;opacity:.78;transform:translateX(-50%) scale(.86)}
+#progressPanel{background:#11170fd9;border-color:#8a7044}
