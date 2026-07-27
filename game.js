@@ -1,5 +1,5 @@
-// ===== V8.0 ULTRA CANVAS EDITION =====
-// Zero external art assets. Enhanced procedural ocean, islands, ships and combat FX.
+// ===== V9.0 FINAL CANVAS EDITION =====
+// Complete no-asset visual rebuild.
 
 // ===== V7 NO-ASSET CARTOON EDITION =====
 // All gameplay art is drawn directly with Canvas. No assets folder required.
@@ -47,17 +47,22 @@ const WORLD={w:4600,h:6800};
 const camera={x:0,y:0};
 
 const MAP_ISLANDS=[
- {x:520,y:680,rx:220,ry:145},{x:1220,y:830,rx:155,ry:110},{x:3500,y:760,rx:250,ry:155},
- {x:3880,y:1520,rx:175,ry:115},{x:760,y:1850,rx:190,ry:125},{x:1850,y:2100,rx:140,ry:100},
- {x:3200,y:2300,rx:215,ry:135},{x:930,y:3200,rx:235,ry:150},{x:2250,y:3350,rx:170,ry:110},
- {x:3650,y:3400,rx:200,ry:130},{x:590,y:4550,rx:210,ry:135},{x:1750,y:4700,rx:150,ry:100},
- {x:3000,y:4900,rx:230,ry:145},{x:3950,y:5350,rx:175,ry:120},{x:1050,y:6000,rx:230,ry:145},
- {x:2500,y:6100,rx:180,ry:115},{x:3600,y:6350,rx:210,ry:130}
+ {x:420,y:650,rx:420,ry:330},{x:520,y:1320,rx:470,ry:360},{x:460,y:2060,rx:440,ry:350},
+ {x:520,y:2850,rx:480,ry:390},{x:430,y:3680,rx:430,ry:360},{x:520,y:4550,rx:470,ry:380},
+ {x:470,y:5400,rx:450,ry:360},{x:530,y:6250,rx:490,ry:390},
+ {x:WORLD.w-420,y:760,rx:430,ry:340},{x:WORLD.w-500,y:1540,rx:470,ry:370},
+ {x:WORLD.w-430,y:2350,rx:420,ry:350},{x:WORLD.w-520,y:3180,rx:490,ry:390},
+ {x:WORLD.w-450,y:4050,rx:440,ry:370},{x:WORLD.w-520,y:4920,rx:480,ry:390},
+ {x:WORLD.w-440,y:5750,rx:430,ry:350},{x:WORLD.w-520,y:6500,rx:470,ry:360},
+ {x:1650,y:1150,rx:170,ry:105},{x:2950,y:1700,rx:150,ry:95},
+ {x:1700,y:2500,rx:140,ry:90},{x:3000,y:3000,rx:165,ry:100},
+ {x:1550,y:3850,rx:155,ry:95},{x:3000,y:4400,rx:145,ry:90},
+ {x:1700,y:5250,rx:170,ry:105},{x:3000,y:5900,rx:150,ry:95}
 ];
 const REEFS=[
- {x:1040,y:1040,r:38},{x:3480,y:1350,r:46},{x:2250,y:2280,r:42},
- {x:920,y:3300,r:48},{x:3650,y:3600,r:40},{x:2050,y:4650,r:52},
- {x:1100,y:5550,r:42},{x:3480,y:5700,r:44}
+ {x:1400,y:900,r:42},{x:3150,y:1200,r:46},{x:2050,y:1800,r:38},{x:2550,y:2350,r:44},
+ {x:1450,y:3200,r:48},{x:3200,y:3600,r:44},{x:2100,y:4200,r:46},{x:2650,y:4950,r:42},
+ {x:1500,y:5700,r:46},{x:3200,y:6200,r:44}
 ];
 const PORTS=[
  {x:WORLD.w/2,y:WORLD.h-260,team:'ally'},
@@ -162,16 +167,22 @@ function drawLaneForces(){
 }
 
 function resetWave(){
- player.x=WORLD.w/2;player.y=WORLD.h/2; player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
+ player.x=WORLD.w/2;player.y=WORLD.h-760;
+ player.speed=SHIPS[shipTier].speed;autoFireRate=SHIPS[shipTier].rate;autoRange=SHIPS[shipTier].range;
  let n=10+Math.min(14,wave*3);
  enemies=[];laneUnits=[];laneSpawnTimer=1;
  for(let i=0;i<n;i++){
-   let p=spawnFarFromPlayer(),boss=wave%5===0&&i===0;
-   enemies.push({x:p.x,y:p.y,a:Math.PI/2,hp:boss?260:70,max:boss?260:70,r:boss?17:12,boss,cd:500+Math.random()*1000,type:1+i%3});
+   let x,y,tries=0;
+   do{
+     x=WORLD.w*.31+Math.random()*WORLD.w*.38;
+     y=380+Math.random()*(WORLD.h-1500);
+     tries++;
+   }while((Math.hypot(x-player.x,y-player.y)<650||blockedByLand(x,y,30))&&tries<120);
+   let boss=wave%5===0&&i===0;
+   enemies.push({x,y,a:Math.PI/2,hp:boss?300:78,max:boss?300:78,r:boss?18:13,boss,cd:450+Math.random()*900,type:1+i%3});
  }
  updateCamera(true);updateHUD();
 }
-
 function updateZoneLabel(){
  const z=$('#zoneName');
  if(!z)return;
@@ -306,8 +317,8 @@ function awardCoins(amount,x=player.x,y=player.y){
  updateHUD();
 }
 
-function muzzle(x,y){for(let i=0;i<12;i++)particles.push({x,y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,life:250,c:i%2?'#ffb42d':'#fff2a0'})}
-function boom(x,y){shake=11;for(let i=0;i<46;i++)particles.push({x,y,vx:(Math.random()-.5)*310,vy:(Math.random()-.5)*310,life:380+Math.random()*620,c:i%4===0?'#fff3ad':i%3?'#ff6b20':'#ffd45a'})}
+function muzzle(x,y){for(let i=0;i<20;i++)particles.push({x,y,vx:(Math.random()-.5)*210,vy:(Math.random()-.5)*210,life:220+Math.random()*180,c:i%3===0?'#fff6c7':i%2?'#ff8b25':'#ffd15a'})}
+function boom(x,y){shake=13;for(let i=0;i<58;i++)particles.push({x,y,vx:(Math.random()-.5)*340,vy:(Math.random()-.5)*340,life:360+Math.random()*720,c:i%5===0?'#fff4b0':i%3?'#ff6320':'#ffd34d'})}
 function update(dt){
  if(paused)return;
  let mx=joy.x,my=joy.y,mag=Math.hypot(mx,my);
@@ -383,134 +394,136 @@ function screenX(x){return x-camera.x}
 function screenY(y){return y-camera.y}
 function visible(o,pad=180){let x=screenX(o.x),y=screenY(o.y);return x>-pad&&x<W+pad&&y>-pad&&y<H+pad}
 function drawSprite(im,o,size){
- const sx=screenX(o.x),sy=screenY(o.y),ambient=ambientShips.includes(o),enemy=o!==player&&!ambient;
- let tier=o===player?shipTier:(enemy?(o.boss?7:Math.min(6,(o.type||1)+1)):(o.kind==='merchant'?3:4));
+ const sx=screenX(o.x),sy=screenY(o.y);
+ const ambient=ambientShips.includes(o),enemy=o!==player&&!ambient,boss=!!o.boss;
+ const hull=enemy?(boss?'#a72c25':'#c24733'):ambient?'#8d7049':'#159f9c';
+ const hullDark=enemy?'#64251e':ambient?'#5a492f':'#075e64';
+ const deck=enemy?'#d47b57':ambient?'#b99461':'#6ed7ca';
  ctx.save();ctx.translate(sx,sy);ctx.rotate(o.a+Math.PI/2);
 
- // wake
- ctx.globalAlpha=.42;ctx.strokeStyle='#d7fbff';ctx.lineWidth=2;
- for(let k=0;k<3;k++){let d=size*(.55+k*.13);ctx.beginPath();ctx.moveTo(-size*.15,size*.30);ctx.quadraticCurveTo(-size*.28,d*.72,-size*(.30+k*.08),d);ctx.stroke();
- ctx.beginPath();ctx.moveTo(size*.15,size*.30);ctx.quadraticCurveTo(size*.28,d*.72,size*(.30+k*.08),d);ctx.stroke();}
- // shadow
- ctx.globalAlpha=.28;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(5,9,size*.36,size*.59,0,0,7);ctx.fill();ctx.globalAlpha=1;
+ ctx.globalAlpha=.22;ctx.fillStyle='#001722';ctx.beginPath();ctx.ellipse(5,10,size*.43,size*.73,0,0,7);ctx.fill();ctx.globalAlpha=1;
+ ctx.save();ctx.globalCompositeOperation='screen';
+ for(let q=0;q<3;q++){
+   ctx.globalAlpha=.30-q*.07;ctx.strokeStyle=q===0?'#ecffff':'#6ed6ee';ctx.lineWidth=2.5-q*.4;
+   ctx.beginPath();ctx.moveTo(-size*.13,size*.40);ctx.quadraticCurveTo(-size*(.30+q*.06),size*(.62+q*.06),-size*(.44+q*.10),size*(.94+q*.12));ctx.stroke();
+   ctx.beginPath();ctx.moveTo(size*.13,size*.40);ctx.quadraticCurveTo(size*(.30+q*.06),size*(.62+q*.06),size*(.44+q*.10),size*(.94+q*.12));ctx.stroke();
+ }ctx.restore();
 
- const war=tier>=5;
- // hull
- ctx.fillStyle=enemy?'#71362f':ambient?'#6d5b43':war?'#526873':'#855a37';
- ctx.strokeStyle=enemy?'#ff9b82':'#d5edf0';ctx.lineWidth=1.5;
- ctx.beginPath();ctx.moveTo(0,-size*.68);ctx.quadraticCurveTo(size*.34,-size*.42,size*.36,-size*.10);
- ctx.lineTo(size*.28,size*.48);ctx.quadraticCurveTo(0,size*.68,-size*.28,size*.48);ctx.lineTo(-size*.36,-size*.10);
- ctx.quadraticCurveTo(-size*.34,-size*.42,0,-size*.68);ctx.closePath();ctx.fill();ctx.stroke();
+ ctx.fillStyle='#172126';ctx.beginPath();ctx.moveTo(0,-size*.76);ctx.quadraticCurveTo(size*.41,-size*.52,size*.43,-size*.16);
+ ctx.lineTo(size*.35,size*.53);ctx.quadraticCurveTo(0,size*.76,-size*.35,size*.53);ctx.lineTo(-size*.43,-size*.16);
+ ctx.quadraticCurveTo(-size*.41,-size*.52,0,-size*.76);ctx.closePath();ctx.fill();
 
- // deck
- ctx.fillStyle=war?'#9aa6a8':'#b07b48';ctx.beginPath();ctx.ellipse(0,0,size*.23,size*.43,0,0,7);ctx.fill();
- ctx.strokeStyle='#513b27';ctx.lineWidth=1;for(let q=-2;q<=2;q++){ctx.beginPath();ctx.moveTo(-size*.18,q*size*.12);ctx.lineTo(size*.18,q*size*.12);ctx.stroke();}
+ ctx.fillStyle=hull;ctx.beginPath();ctx.moveTo(0,-size*.69);ctx.quadraticCurveTo(size*.34,-size*.46,size*.36,-size*.15);
+ ctx.lineTo(size*.29,size*.46);ctx.quadraticCurveTo(0,size*.66,-size*.29,size*.46);ctx.lineTo(-size*.36,-size*.15);
+ ctx.quadraticCurveTo(-size*.34,-size*.46,0,-size*.69);ctx.closePath();ctx.fill();
 
- if(!war){
-   // masts + layered sails
-   ctx.strokeStyle='#30271f';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,-size*.38);ctx.lineTo(0,size*.38);ctx.stroke();
-   const sails=tier>=3?3:tier>=2?2:1;
-   for(let m=0;m<sails;m++){
-     let yy=-size*.28+m*size*.25,side=m%2? -1:1;
-     ctx.fillStyle=enemy?'#b86d59':ambient?'#d6c18d':'#eee0b9';
-     ctx.beginPath();ctx.moveTo(side*2,yy-size*.12);ctx.lineTo(side*size*(.22+.03*m),yy);ctx.lineTo(side*2,yy+size*.13);ctx.closePath();ctx.fill();
-   }
- }else{
-   // armored superstructure + turrets
-   ctx.fillStyle=enemy?'#554844':'#b6c0c1';ctx.fillRect(-size*.15,-size*.05,size*.30,size*.30);
-   ctx.fillStyle='#314148';ctx.fillRect(-size*.06,-size*.29,size*.12,size*.23);
-   let guns=o===player?SHIPS[shipTier].guns:(o.boss?4:2);
-   for(let g=0;g<Math.min(4,guns);g++){let gy=-size*.43+g*size*.20;ctx.fillStyle='#202c31';ctx.beginPath();ctx.arc(0,gy,size*.085,0,7);ctx.fill();ctx.fillRect(-2,gy-size*.20,4,size*.20);}
+ ctx.fillStyle=hullDark;ctx.fillRect(-size*.38,-size*.12,size*.08,size*.50);ctx.fillRect(size*.30,-size*.12,size*.08,size*.50);
+ for(let k=0;k<5;k++){let yy=-size*.08+k*size*.10;ctx.fillStyle='#202a2f';
+   ctx.beginPath();ctx.arc(-size*.40,yy,size*.045,0,7);ctx.fill();ctx.beginPath();ctx.arc(size*.40,yy,size*.045,0,7);ctx.fill();}
+
+ ctx.fillStyle=deck;ctx.beginPath();ctx.roundRect(-size*.20,-size*.34,size*.40,size*.66,size*.08);ctx.fill();
+ ctx.fillStyle='#1b3439';ctx.beginPath();ctx.roundRect(-size*.12,-size*.05,size*.24,size*.24,size*.06);ctx.fill();
+
+ const ty=-size*.30;
+ ctx.fillStyle=enemy?'#7b3027':'#0d686a';ctx.beginPath();ctx.arc(0,ty,size*.16,0,7);ctx.fill();
+ ctx.strokeStyle='#151d20';ctx.lineCap='round';ctx.lineWidth=size*.085;ctx.beginPath();ctx.moveTo(0,ty-size*.05);ctx.lineTo(0,-size*.73);ctx.stroke();
+ ctx.strokeStyle='#b9d0d3';ctx.lineWidth=size*.045;ctx.beginPath();ctx.moveTo(-size*.012,ty-size*.05);ctx.lineTo(-size*.012,-size*.70);ctx.stroke();
+
+ ctx.fillStyle='#ffffff35';ctx.beginPath();ctx.ellipse(-size*.10,-size*.34,size*.065,size*.18,-.25,0,7);ctx.fill();
+ ctx.fillStyle=enemy?'#ff8a6a':'#81f9e8';ctx.beginPath();ctx.moveTo(0,-size*.66);ctx.lineTo(size*.10,-size*.53);ctx.lineTo(-size*.10,-size*.53);ctx.closePath();ctx.fill();
+
+ ctx.strokeStyle='#2a241f';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(size*.18,size*.10);ctx.lineTo(size*.18,-size*.18);ctx.stroke();
+ ctx.fillStyle=enemy?'#ff3c34':'#42f1d4';ctx.beginPath();ctx.moveTo(size*.18,-size*.18);ctx.lineTo(size*.35,-size*.13);ctx.lineTo(size*.18,-size*.07);ctx.fill();
+
+ if(boss){
+   ctx.strokeStyle='#161c1f';ctx.lineWidth=size*.055;
+   ctx.beginPath();ctx.moveTo(-size*.10,ty);ctx.lineTo(-size*.10,-size*.73);ctx.stroke();
+   ctx.beginPath();ctx.moveTo(size*.10,ty);ctx.lineTo(size*.10,-size*.73);ctx.stroke();
  }
- // side gun ports
- if(tier>=2){ctx.fillStyle='#11181a';for(let q=-1;q<=1;q++){ctx.beginPath();ctx.arc(size*.285,q*size*.17,2.3,0,7);ctx.fill();ctx.beginPath();ctx.arc(-size*.285,q*size*.17,2.3,0,7);ctx.fill();}}
- // faction pennant
- ctx.strokeStyle='#2a2118';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(0,-size*.32);ctx.lineTo(0,-size*.51);ctx.stroke();
- ctx.fillStyle=enemy?'#d9483d':ambient?'#e0c36b':'#31d8ca';ctx.beginPath();ctx.moveTo(0,-size*.51);ctx.lineTo(size*.14,-size*.46);ctx.lineTo(0,-size*.42);ctx.fill();
  ctx.restore();
 }
 function drawWorldBackground(){
  const g=ctx.createLinearGradient(0,0,W,H);
- g.addColorStop(0,'#063a72');g.addColorStop(.48,'#0878a8');g.addColorStop(1,'#075284');
+ g.addColorStop(0,'#06466e');g.addColorStop(.46,'#087e98');g.addColorStop(1,'#065276');
  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 
- // Deep-water flowing streaks
- ctx.save();
- ctx.globalAlpha=.28;ctx.strokeStyle='#72d7ef';ctx.lineWidth=2;
- for(let wy=Math.floor(camera.y/76)*76;wy<camera.y+H+76;wy+=76){
-   const y=wy-camera.y;
-   for(let wx=Math.floor(camera.x/150)*150;wx<camera.x+W+180;wx+=150){
-     const x=wx-camera.x;
-     ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x+25,y-8,x+55,y+7,x+82,y);ctx.stroke();
+ const tt=performance.now()*.001;
+ ctx.save();ctx.globalCompositeOperation='screen';ctx.lineCap='round';
+ for(let row=-1;row<Math.ceil(H/78)+2;row++){
+   let y=row*78-((camera.y*.11)%78);
+   for(let col=-1;col<Math.ceil(W/150)+2;col++){
+     let x=col*150-((camera.x*.08)%150)+Math.sin(tt*1.2+row+col)*12;
+     ctx.globalAlpha=.10;ctx.strokeStyle='#8de7f0';ctx.lineWidth=1.5;
+     ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x+24,y-5,x+49,y+6,x+78,y);ctx.stroke();
    }
  }
- ctx.restore();
+ for(let k=0;k<30;k++){
+   let x=((k*173+tt*20*(k%3+1))%(W+140))-70,y=((k*97+Math.sin(tt+k)*30)%(H+80))-40;
+   ctx.globalAlpha=.04+(k%5)*.012;ctx.fillStyle='#dbffff';
+   ctx.beginPath();ctx.ellipse(x,y,10+(k%4)*5,1.2,0,0,7);ctx.fill();
+ }ctx.restore();
 
- // Dense organic islands, darker like Warcraft III terrain.
- for(let n=0;n<MAP_ISLANDS.length;n++){
-   const i=MAP_ISLANDS[n],x=i.x-camera.x,y=i.y-camera.y;
-   if(x<-i.rx*1.8||x>W+i.rx*1.8||y<-i.ry*1.8||y>H+i.ry*1.8)continue;
-   ctx.save();ctx.translate(x,y);ctx.rotate((n%5-2)*.08);
+ MAP_ISLANDS.forEach((i,n)=>{
+   const x=i.x-camera.x,y=i.y-camera.y;
+   if(x<-i.rx*1.7||x>W+i.rx*1.7||y<-i.ry*1.7||y>H+i.ry*1.7)return;
+   ctx.save();ctx.translate(x,y);ctx.rotate((n%7-3)*.025);
 
-   // murky shallow ring
-   ctx.fillStyle='#65e0cf66';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
-   ctx.strokeStyle='#b9fff08a';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
+   ctx.globalAlpha=.72;ctx.fillStyle='#45d1c7';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.16,i.ry*1.18,0,0,7);ctx.fill();
+   ctx.globalAlpha=.82;ctx.strokeStyle='#e4ffff';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.09,i.ry*1.11,0,0,7);ctx.stroke();
+   ctx.globalAlpha=1;
 
-   // rugged shoreline
-   let pts=[];
-   for(let k=0;k<44;k++){
-     let a=k/44*Math.PI*2;
-     let noise=1+Math.sin(k*2.17+n)*.08+Math.sin(k*5.3+n*.8)*.045;
-     pts.push([Math.cos(a)*i.rx*noise,Math.sin(a)*i.ry*noise]);
-   }
-   ctx.fillStyle='#d7bd73';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
-   // inner dark soil/forest floor
-   ctx.fillStyle='#34733c';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
+   ctx.fillStyle='#d9bd73';ctx.beginPath();
+   for(let k=0;k<38;k++){let a=k/38*Math.PI*2,noise=1+Math.sin(k*2.17+n)*.06+Math.sin(k*5.1+n*.4)*.025;
+     let px=Math.cos(a)*i.rx*noise,py=Math.sin(a)*i.ry*noise;k?ctx.lineTo(px,py):ctx.moveTo(px,py)}
+   ctx.closePath();ctx.fill();
 
-   // many dense tree crowns
-   for(let k=0;k<52;k++){
-     const a=k*2.399+n*.6,rr=.08+(k%9)*.085;
-     const tx=Math.cos(a)*i.rx*rr,ty=Math.sin(a)*i.ry*rr*.84;
-     const r=5+(k%5)*1.8;
-     ctx.fillStyle=k%4===0?'#155b35':k%4===1?'#1f7540':k%4===2?'#2b8b48':'#3aa655';
+   ctx.fillStyle='#2e7138';ctx.beginPath();ctx.ellipse(0,0,i.rx*.83,i.ry*.78,0,0,7);ctx.fill();
+
+   for(let k=0;k<46;k++){
+     const a=k*2.399+n*.47,rr=.08+(k%10)*.073,tx=Math.cos(a)*i.rx*rr,ty=Math.sin(a)*i.ry*rr*.80,r=5+(k%5)*1.7;
+     ctx.fillStyle=k%4===0?'#17582f':k%4===1?'#23723a':k%4===2?'#2e8b43':'#3ba14b';
      ctx.beginPath();ctx.arc(tx,ty,r,0,7);ctx.fill();
+     ctx.fillStyle='#a6ef8020';ctx.beginPath();ctx.arc(tx-r*.25,ty-r*.25,r*.42,0,7);ctx.fill();
    }
 
-   // shoreline rocks / ruins
-   ctx.fillStyle='#6e7b80';
-   for(let k=0;k<13;k++){
-     let a=k*.71+n*.35;
-     ctx.beginPath();ctx.ellipse(Math.cos(a)*i.rx*.83,Math.sin(a)*i.ry*.68,4+(k%3)*3,3+(k%2)*2,a,0,7);ctx.fill();
+   for(let k=0;k<5;k++){
+     let a=k*1.91+n*.7,rr=.28+.14*((k+n)%3),tx=Math.cos(a)*i.rx*rr,ty=Math.sin(a)*i.ry*rr*.78;
+     ctx.save();ctx.translate(tx,ty);ctx.strokeStyle='#674b2b';ctx.lineWidth=2.1;ctx.beginPath();ctx.moveTo(0,8);ctx.quadraticCurveTo(2,1,1,-8);ctx.stroke();
+     for(let q=0;q<5;q++){ctx.save();ctx.rotate(q*Math.PI*2/5);ctx.fillStyle=q%2?'#2c8d42':'#3ca953';
+       ctx.beginPath();ctx.ellipse(0,-11,3.2,10,0,0,7);ctx.fill();ctx.restore();}
+     ctx.restore();
    }
-   if(n%3===0){
-     ctx.fillStyle='#2c2c28';ctx.fillRect(-9,-18,18,20);ctx.fillStyle='#535449';ctx.fillRect(-14,-22,28,6);
+
+   for(let k=0;k<10;k++){
+     const a=k*.72+n*.39,rr=.82+(k%2)*.07,rx=Math.cos(a)*i.rx*rr,ry=Math.sin(a)*i.ry*rr;
+     ctx.fillStyle=k%2?'#69757a':'#7d888c';ctx.beginPath();ctx.ellipse(rx,ry,5+(k%3)*3,4+(k%2)*3,a,0,7);ctx.fill();
+     ctx.fillStyle='#c6d1d155';ctx.beginPath();ctx.ellipse(rx-2,ry-2,3+(k%2),2,0,0,7);ctx.fill();
    }
    ctx.restore();
- }
+ });
 
- // reefs
- for(const q of REEFS){
-   const x=q.x-camera.x,y=q.y-camera.y;if(x<-90||x>W+90||y<-90||y>H+90)continue;
-   ctx.save();ctx.globalAlpha=.85;ctx.fillStyle='#4f5b5f';
-   for(let k=0;k<9;k++){let a=k*.72;ctx.beginPath();ctx.arc(x+Math.cos(a)*q.r*.45,y+Math.sin(a)*q.r*.33,4+(k%4)*2,0,7);ctx.fill()}
-   ctx.strokeStyle='#698f8d66';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(x,y,q.r*1.1,q.r*.62,.25,0,7);ctx.stroke();ctx.restore();
- }
+ REEFS.forEach((q,n)=>{
+   const x=q.x-camera.x,y=q.y-camera.y;if(x<-90||x>W+90||y<-90||y>H+90)return;
+   ctx.save();ctx.globalAlpha=.62;ctx.fillStyle='#46cbc1';ctx.beginPath();ctx.ellipse(x,y,q.r*1.45,q.r*.92,.25,0,7);ctx.fill();ctx.globalAlpha=1;
+   for(let k=0;k<8;k++){let a=k*.82+n*.24,rr=q.r*.44;ctx.fillStyle=k%2?'#69757a':'#7d888c';
+     ctx.beginPath();ctx.arc(x+Math.cos(a)*rr,y+Math.sin(a)*rr*.68,5+(k%4)*2.2,0,7);ctx.fill();}
+   ctx.strokeStyle='#e9ffffdd';ctx.lineWidth=1.6;ctx.beginPath();ctx.ellipse(x,y,q.r*1.05,q.r*.65,.25,0,7);ctx.stroke();ctx.restore();
+ });
 
- // smoky dark vignette
- const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.18,W/2,H/2,Math.max(W,H)*.72);
- v.addColorStop(.50,'#0000');v.addColorStop(1,'#0004');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+ const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.30,W/2,H/2,Math.max(W,H)*.78);
+ v.addColorStop(.55,'#0000');v.addColorStop(1,'#00121f55');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
 function drawMiniMap(){
- const mw=118,mh=118,x=W-mw-18,y=120;
- ctx.save();ctx.globalAlpha=.92;ctx.fillStyle='#06100ddd';ctx.fillRect(x,y,mw,mh);
- ctx.strokeStyle='#d9c06c';ctx.lineWidth=2;ctx.strokeRect(x,y,mw,mh);
- MAP_ISLANDS.forEach(i=>{ctx.fillStyle='#486b45';ctx.beginPath();ctx.ellipse(x+i.x/WORLD.w*mw,y+i.y/WORLD.h*mh,Math.max(2,i.rx/WORLD.w*mw),Math.max(2,i.ry/WORLD.h*mh),0,0,7);ctx.fill()});
- enemies.forEach(e=>{ctx.fillStyle=e.boss?'#ffad33':'#ff4d4d';ctx.fillRect(x+e.x/WORLD.w*mw-1.5,y+e.y/WORLD.h*mh-1.5,e.boss?5:3,e.boss?5:3)});
- ctx.fillStyle='#55fff0';ctx.beginPath();ctx.arc(x+player.x/WORLD.w*mw,y+player.y/WORLD.h*mh,4,0,7);ctx.fill();
- ctx.strokeStyle='#ffffff66';ctx.strokeRect(x+camera.x/WORLD.w*mw,y+camera.y/WORLD.h*mh,Math.min(mw,W/WORLD.w*mw),Math.min(mh,H/WORLD.h*mh));
+ const mw=118,mh=142,x=W-mw-16,y=118;
+ ctx.save();ctx.globalAlpha=.94;ctx.fillStyle='#052b35e8';
+ ctx.beginPath();ctx.roundRect(x,y,mw,mh,8);ctx.fill();ctx.strokeStyle='#d9c06c';ctx.lineWidth=2;ctx.stroke();
+ ctx.fillStyle='#0b6f7e';ctx.fillRect(x+mw*.27,y+4,mw*.46,mh-8);
+ ctx.fillStyle='#315e36';ctx.fillRect(x+3,y+3,mw*.24,mh-6);ctx.fillRect(x+mw*.73,y+3,mw*.24,mh-6);
+ enemies.forEach(e=>{ctx.fillStyle=e.boss?'#ffb23c':'#ff493e';let ex=x+e.x/WORLD.w*mw,ey=y+e.y/WORLD.h*mh;ctx.fillRect(ex-2,ey-2,e.boss?5:4,e.boss?5:4)});
+ ctx.fillStyle='#5cfff0';ctx.beginPath();ctx.arc(x+player.x/WORLD.w*mw,y+player.y/WORLD.h*mh,4,0,7);ctx.fill();
+ ctx.strokeStyle='#ffffff55';ctx.strokeRect(x+camera.x/WORLD.w*mw,y+camera.y/WORLD.h*mh,Math.min(mw,W/WORLD.w*mw),Math.min(mh,H/WORLD.h*mh));
  ctx.restore();
 }
-
 
 function drawWorldElements(){
  PORTS.forEach(p=>{
@@ -636,16 +649,12 @@ function draw(){
  drawLaneForces();
  enemies.forEach(e=>{
    if(!visible(e))return;
-   drawSprite(null,e,e.boss?58:38);drawUnitHealth(e,e.boss?56:42);
+   drawSprite(null,e,e.boss?62:43);drawUnitHealth(e,e.boss?56:42);
    let sx=screenX(e.x),sy=screenY(e.y);
-   ctx.save();
-   ctx.strokeStyle=e.boss?'#ffb24d':'#ff5d63';ctx.lineWidth=e.boss?3:2;
-   ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=e.boss?14:8;
-   ctx.beginPath();ctx.arc(sx,sy,e.boss?26:21,0,Math.PI*2);ctx.stroke();ctx.restore();
    ctx.fillStyle='#351013';ctx.fillRect(sx-36,sy-70,72,8);
    ctx.fillStyle=e.boss?'#ff9a2d':'#ff4047';ctx.fillRect(sx-36,sy-70,72*Math.max(0,e.hp/e.max),8);
  });
- drawSprite(null,player,Math.max(46,SHIPS[shipTier].size*1.02));drawUnitHealth(player,58);
+ drawSprite(null,player,Math.max(50,SHIPS[shipTier].size*1.10));drawUnitHealth(player,60);
  let px=screenX(player.x),py=screenY(player.y);
  // V7: no blue locator ring. Small heading marker only.
  ctx.save();
@@ -656,8 +665,8 @@ function draw(){
  ctx.stroke();
  ctx.restore();
 
- bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=32;ctx.lineWidth=b.heavy?11:5.5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
- particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2.4+Math.min(7,p.life/95),0,7);ctx.fill();ctx.globalAlpha=1});
+ bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=34;ctx.lineWidth=b.heavy?11:5.5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
+ particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
  floatingTexts.forEach(f=>{
    let x=screenX(f.x),y=screenY(f.y);
    let a=Math.max(0,Math.min(1,f.life/f.maxLife));

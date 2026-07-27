@@ -179,7 +179,15 @@ html,body,#game,#c{background:#063a72}
  border-color:#c3f7ff77
 }
 
-/* ===== V8 ULTRA CANVAS ===== */
-#c{image-rendering:auto;filter:saturate(1.08) contrast(1.03)}
-#hud{backdrop-filter:blur(2px)}
-#battleInfo{backdrop-filter:blur(4px)}
+/* ===== V9 FINAL CANVAS UI ===== */
+html,body,#game,#c{background:#06466e}
+#c{filter:saturate(1.12) contrast(1.04)}
+#hud{height:94px;background:linear-gradient(#052d43f5 0%,#06364bc9 60%,transparent 100%);filter:drop-shadow(0 6px 12px #001824aa)}
+.hp{height:25px;border-color:#d4ffff;background:#40171a}.hp i{background:linear-gradient(90deg,#26db63,#b8ef32)}
+#pause{background:#073d51e8;border:1px solid #9feeff55}
+#battleInfo{top:78px;opacity:.92;background:linear-gradient(180deg,#063b4ee8,#052a39e8);border-color:#d6b768aa;box-shadow:0 8px 24px #001824aa,inset 0 0 16px #ffffff0e}
+#progressPanel{background:#062f3ee8;border-color:#c9a95d99}
+#upgradeShip{background:linear-gradient(#178da7,#0d607f);border-color:#9cecff;box-shadow:0 8px 24px #001722aa,0 0 20px #3fcfff55}
+#joy{border-color:#a6f9ed99;background:radial-gradient(circle at 50% 50%,#0d516066 0 24%,#062c36cc 26% 60%,#041820dd 61% 100%)}
+.mainMenu{background:radial-gradient(circle at 50% 28%,#1186a5aa 0,#07556fdd 40%,#03283bf7 82%)}
+.mainMenuCard{background:linear-gradient(160deg,#096d84ef,#06394fee);border-color:#b8f5ff77}
