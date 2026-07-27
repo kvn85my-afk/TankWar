@@ -151,3 +151,30 @@ body{background:#031923}
 
 #battleInfo{top:78px;opacity:.78;transform:translateX(-50%) scale(.86)}
 #progressPanel{background:#11170fd9;border-color:#8a7044}
+
+
+/* ===== V7.0 NO-ASSET CARTOON UI ===== */
+html,body,#game,#c{background:#063a72}
+#hud{
+ background:linear-gradient(#072e49f2 0%,#07324bc4 58%,transparent 100%);
+}
+.hp{border-color:#bce9ef;background:#163b49}
+#pause{background:#0b4664e8;border:1px solid #a8eaff55}
+#battleInfo{
+ background:#083a55d9;border-color:#aee8d799;
+ box-shadow:0 8px 22px #001c2c99
+}
+#progressPanel{
+ background:#073b4bdc;border-color:#9fe8d4aa
+}
+#upgradeShip{
+ border-color:#a5f5e8;background:linear-gradient(#179f9a,#08736f);
+ box-shadow:0 8px 24px #002a3aaa,0 0 18px #4fffe066
+}
+.mainMenu{
+ background:radial-gradient(circle at 50% 30%,#1596b7aa 0,#07547cdd 42%,#032844f5 82%)
+}
+.mainMenuCard{
+ background:linear-gradient(160deg,#0b6680ee,#063b59ee);
+ border-color:#c3f7ff77
+}

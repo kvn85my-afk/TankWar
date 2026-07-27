@@ -1,18 +1,6 @@
-// ===== BattleShip V6.1 SAFE VISUAL UPGRADE =====
-// Based on the last stable V5 structure. No giant environment texture tiling.
 
-// ===== V5.1.1 COLLISION HOTFIX =====
-// Fix: player can no longer spawn/stay trapped inside an island.
-// ===== V5.1 FULL ASSET EDITION =====
-const V51_ASSET_PATHS=[
- 'assets/ships/ship_tier_1_wood_boat.png','assets/ships/ship_tier_2_small_sloop.png',
- 'assets/ships/ship_tier_3_medium_frigate.png','assets/ships/ship_tier_4_large_galleon.png',
- 'assets/ships/ship_tier_5_small_gunboat.png','assets/ships/ship_tier_6_medium_destroyer.png',
- 'assets/ships/ship_tier_7_large_battleship.png','assets/ships/ship_tier_8_ultimate_dreadnought.png'
-];
-const V51_ART={};
-V51_ASSET_PATHS.forEach(src=>{const im=new Image();im.src=src;V51_ART[src]=im;});
-
+// ===== V7 NO-ASSET CARTOON EDITION =====
+// All gameplay art is drawn directly with Canvas. No assets folder required.
 const c=document.querySelector('#c'),ctx=c.getContext('2d');let W,H,DPR;
 const $=s=>document.querySelector(s);
 // ===== Pause / Restart / Exit Menu =====
@@ -115,33 +103,6 @@ function blockedByLand(x,y,r=18){
  }
  return false;
 }
-
-function findNearestSafeWater(x,y,r=18){
- // First keep the requested position when it is already valid water.
- if(!blockedByLand(x,y,r)) return {x,y};
-
- // Search outward in rings so a bad spawn point can never trap the ship inside land.
- const step=28;
- for(let radius=step; radius<=520; radius+=step){
-   const samples=Math.max(16,Math.ceil(radius/12));
-   for(let n=0;n<samples;n++){
-     const a=(n/samples)*Math.PI*2;
-     const sx=Math.max(60,Math.min(WORLD.w-60,x+Math.cos(a)*radius));
-     const sy=Math.max(60,Math.min(WORLD.h-60,y+Math.sin(a)*radius));
-     if(!blockedByLand(sx,sy,r+4)) return {x:sx,y:sy};
-   }
- }
- // Very unlikely fallback: allied harbor water area.
- return {x:WORLD.w/2,y:WORLD.h-520};
-}
-
-function rescuePlayerFromLand(){
- if(!blockedByLand(player.x,player.y,player.r)) return;
- const safe=findNearestSafeWater(player.x,player.y,player.r);
- player.x=safe.x;
- player.y=safe.y;
- waterSplashes.push({x:player.x,y:player.y,life:700,max:700});
-}
 function moveWithCollision(o,nx,ny){
  if(!blockedByLand(nx,ny,o.r||14)){o.x=nx;o.y=ny;return}
  if(!blockedByLand(nx,o.y,o.r||14))o.x=nx;
@@ -199,9 +160,7 @@ function drawLaneForces(){
 }
 
 function resetWave(){
- const spawn=findNearestSafeWater(WORLD.w/2,WORLD.h/2,player.r);
- player.x=spawn.x;player.y=spawn.y;
- player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
+ player.x=WORLD.w/2;player.y=WORLD.h/2; player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
  let n=10+Math.min(14,wave*3);
  enemies=[];laneUnits=[];laneSpawnTimer=1;
  for(let i=0;i<n;i++){
@@ -346,11 +305,9 @@ function awardCoins(amount,x=player.x,y=player.y){
 }
 
 function muzzle(x,y){for(let i=0;i<12;i++)particles.push({x,y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,life:250,c:i%2?'#ffb42d':'#fff2a0'})}
-function boom(x,y){shake=11;for(let i=0;i<44;i++)particles.push({x,y,vx:(Math.random()-.5)*300,vy:(Math.random()-.5)*300,life:380+Math.random()*600,c:i%4===0?'#fff1a0':i%3?'#ff6b20':'#ffd45a'})}
+function boom(x,y){shake=11;for(let i=0;i<46;i++)particles.push({x,y,vx:(Math.random()-.5)*310,vy:(Math.random()-.5)*310,life:380+Math.random()*620,c:i%4===0?'#fff3ad':i%3?'#ff6b20':'#ffd45a'})}
 function update(dt){
  if(paused)return;
- // Safety net for old saves/map edits: never allow the player to remain trapped inside land.
- rescuePlayerFromLand();
  let mx=joy.x,my=joy.y,mag=Math.hypot(mx,my);
  if(mag>.08){
    const nx=Math.max(60,Math.min(WORLD.w-60,player.x+mx*player.speed*dt));
@@ -424,25 +381,6 @@ function screenX(x){return x-camera.x}
 function screenY(y){return y-camera.y}
 function visible(o,pad=180){let x=screenX(o.x),y=screenY(o.y);return x>-pad&&x<W+pad&&y>-pad&&y<H+pad}
 function drawSprite(im,o,size){
- const _ambient=typeof ambientShips!=='undefined'&&ambientShips.includes(o);
- const _enemy=o!==player&&!_ambient;
- let _tier=o===player?shipTier:(_enemy?(o.boss?8:Math.min(7,(o.type||1)+2)):3);
- const _src=V51_ASSET_PATHS[Math.max(0,Math.min(7,_tier-1))],_art=V51_ART[_src];
- if(_art&&_art.complete&&_art.naturalWidth){
-   const _sx=screenX(o.x),_sy=screenY(o.y),_w=size*2.15,_h=_w*(_art.naturalHeight/_art.naturalWidth);
-   ctx.save();ctx.translate(_sx,_sy);ctx.rotate(o.a+Math.PI/2);
-   if(_enemy){
-     ctx.globalAlpha=.95;
-     ctx.filter='brightness(1.20) contrast(1.08) saturate(1.12) sepia(.12) hue-rotate(330deg)';
-   }else if(o===player){
-     ctx.globalAlpha=1;
-     ctx.filter='brightness(1.55) contrast(1.12) saturate(1.22) drop-shadow(0 4px 5px rgba(0,0,0,.65))';
-   }else{
-     ctx.filter='brightness(1.18) contrast(1.06) saturate(1.10)';
-   }
-   ctx.drawImage(_art,-_w/2,-_h/2,_w,_h);ctx.restore();ctx.filter='none';return;
- }
-
  const sx=screenX(o.x),sy=screenY(o.y),ambient=ambientShips.includes(o),enemy=o!==player&&!ambient;
  let tier=o===player?shipTier:(enemy?(o.boss?7:Math.min(6,(o.type||1)+1)):(o.kind==='merchant'?3:4));
  ctx.save();ctx.translate(sx,sy);ctx.rotate(o.a+Math.PI/2);
@@ -491,12 +429,12 @@ function drawSprite(im,o,size){
 }
 function drawWorldBackground(){
  const g=ctx.createLinearGradient(0,0,W,H);
- g.addColorStop(0,'#07173c');g.addColorStop(.48,'#09315b');g.addColorStop(1,'#07132f');
+ g.addColorStop(0,'#063a72');g.addColorStop(.48,'#0878a8');g.addColorStop(1,'#075284');
  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 
  // Deep-water flowing streaks
  ctx.save();
- ctx.globalAlpha=.22;ctx.strokeStyle='#3f7ca8';ctx.lineWidth=2;
+ ctx.globalAlpha=.28;ctx.strokeStyle='#72d7ef';ctx.lineWidth=2;
  for(let wy=Math.floor(camera.y/76)*76;wy<camera.y+H+76;wy+=76){
    const y=wy-camera.y;
    for(let wx=Math.floor(camera.x/150)*150;wx<camera.x+W+180;wx+=150){
@@ -513,8 +451,8 @@ function drawWorldBackground(){
    ctx.save();ctx.translate(x,y);ctx.rotate((n%5-2)*.08);
 
    // murky shallow ring
-   ctx.fillStyle='#65aa9460';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
-   ctx.strokeStyle='#8fc7ad70';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
+   ctx.fillStyle='#65e0cf66';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
+   ctx.strokeStyle='#b9fff08a';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
 
    // rugged shoreline
    let pts=[];
@@ -523,21 +461,21 @@ function drawWorldBackground(){
      let noise=1+Math.sin(k*2.17+n)*.08+Math.sin(k*5.3+n*.8)*.045;
      pts.push([Math.cos(a)*i.rx*noise,Math.sin(a)*i.ry*noise]);
    }
-   ctx.fillStyle='#657052';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
+   ctx.fillStyle='#d7bd73';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
    // inner dark soil/forest floor
-   ctx.fillStyle='#173526';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
+   ctx.fillStyle='#34733c';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
 
    // many dense tree crowns
    for(let k=0;k<52;k++){
      const a=k*2.399+n*.6,rr=.08+(k%9)*.085;
      const tx=Math.cos(a)*i.rx*rr,ty=Math.sin(a)*i.ry*rr*.84;
      const r=5+(k%5)*1.8;
-     ctx.fillStyle=k%4===0?'#0d3826':k%4===1?'#14502f':k%4===2?'#1c6036':'#28723d';
+     ctx.fillStyle=k%4===0?'#155b35':k%4===1?'#1f7540':k%4===2?'#2b8b48':'#3aa655';
      ctx.beginPath();ctx.arc(tx,ty,r,0,7);ctx.fill();
    }
 
    // shoreline rocks / ruins
-   ctx.fillStyle='#6b6f67';
+   ctx.fillStyle='#6e7b80';
    for(let k=0;k<13;k++){
      let a=k*.71+n*.35;
      ctx.beginPath();ctx.ellipse(Math.cos(a)*i.rx*.83,Math.sin(a)*i.ry*.68,4+(k%3)*3,3+(k%2)*2,a,0,7);ctx.fill();
@@ -558,7 +496,7 @@ function drawWorldBackground(){
 
  // smoky dark vignette
  const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.18,W/2,H/2,Math.max(W,H)*.72);
- v.addColorStop(.48,'#0000');v.addColorStop(1,'#0005');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+ v.addColorStop(.50,'#0000');v.addColorStop(1,'#0004');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
 function drawMiniMap(){
  const mw=118,mh=118,x=W-mw-18,y=120;
@@ -690,8 +628,8 @@ function draw(){
 
  // subtle unexplored-war atmosphere
  let fog=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.20,W/2,H/2,Math.max(W,H)*.78);
- fog.addColorStop(0,'#0000');fog.addColorStop(1,'#00000032');ctx.fillStyle=fog;ctx.fillRect(0,0,W,H);
- let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b25');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0008');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+ fog.addColorStop(0,'#0000');fog.addColorStop(1,'#00000022');ctx.fillStyle=fog;ctx.fillRect(0,0,W,H);
+ let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b18');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0003');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
 
  drawLaneForces();
  enemies.forEach(e=>{
@@ -705,18 +643,18 @@ function draw(){
    ctx.fillStyle='#351013';ctx.fillRect(sx-36,sy-70,72,8);
    ctx.fillStyle=e.boss?'#ff9a2d':'#ff4047';ctx.fillRect(sx-36,sy-70,72*Math.max(0,e.hp/e.max),8);
  });
- drawSprite(null,player,Math.max(44,SHIPS[shipTier].size*.98));drawUnitHealth(player,56);
+ drawSprite(null,player,Math.max(46,SHIPS[shipTier].size*1.02));drawUnitHealth(player,58);
  let px=screenX(player.x),py=screenY(player.y);
- // V6.1: cyan locator ring removed. Keep only a subtle heading tick.
+ // V7: no blue locator ring. Small heading marker only.
  ctx.save();
- ctx.strokeStyle='#ffffffaa';ctx.lineWidth=2;
+ ctx.strokeStyle='#ffffffbb';ctx.lineWidth=2;
  ctx.beginPath();
- ctx.moveTo(px+Math.cos(player.a)*28,py+Math.sin(player.a)*28);
- ctx.lineTo(px+Math.cos(player.a)*37,py+Math.sin(player.a)*37);
+ ctx.moveTo(px+Math.cos(player.a)*29,py+Math.sin(player.a)*29);
+ ctx.lineTo(px+Math.cos(player.a)*38,py+Math.sin(player.a)*38);
  ctx.stroke();
  ctx.restore();
 
- bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=28;ctx.lineWidth=b.heavy?9:5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
+ bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=28;ctx.lineWidth=b.heavy?10:5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
  particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
  floatingTexts.forEach(f=>{
    let x=screenX(f.x),y=screenY(f.y);
