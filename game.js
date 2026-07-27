@@ -1,18 +1,15 @@
 
-// ===== V5.4 TROPICAL WARZONE VISUAL UPGRADE =====
-// Denser tropical islands, brighter player ship, stronger battle readability and FX.
-// ===== V5.2 GAMEPLAY + AI UPGRADE =====
-// Safer spawn water, island-aware enemy steering, stronger battle FX, denser sea atmosphere.
+// ===== V5.1.1 COLLISION HOTFIX =====
 // Fix: player can no longer spawn/stay trapped inside an island.
 // ===== V5.1 FULL ASSET EDITION =====
-// ===== V5.3 SINGLE BATTLESHIP VISUAL =====
-// Player always uses the same battleship image. Upgrades increase its visual size.
-const PLAYER_BATTLESHIP_SRC='assets/ships/player_battleship.png';
-const PLAYER_BATTLESHIP_ART=new Image();
-PLAYER_BATTLESHIP_ART.src=PLAYER_BATTLESHIP_SRC;
-
-// Visual scale by level: Lv1 -> Lv8
-const PLAYER_SHIP_SCALE=[0.50,0.58,0.66,0.74,0.82,0.90,1.00,1.15];
+const V51_ASSET_PATHS=[
+ 'assets/ships/ship_tier_1_wood_boat.png','assets/ships/ship_tier_2_small_sloop.png',
+ 'assets/ships/ship_tier_3_medium_frigate.png','assets/ships/ship_tier_4_large_galleon.png',
+ 'assets/ships/ship_tier_5_small_gunboat.png','assets/ships/ship_tier_6_medium_destroyer.png',
+ 'assets/ships/ship_tier_7_large_battleship.png','assets/ships/ship_tier_8_ultimate_dreadnought.png'
+];
+const V51_ART={};
+V51_ASSET_PATHS.forEach(src=>{const im=new Image();im.src=src;V51_ART[src]=im;});
 
 const c=document.querySelector('#c'),ctx=c.getContext('2d');let W,H,DPR;
 const $=s=>document.querySelector(s);
@@ -63,11 +60,7 @@ const MAP_ISLANDS=[
  {x:3200,y:2300,rx:215,ry:135},{x:930,y:3200,rx:235,ry:150},{x:2250,y:3350,rx:170,ry:110},
  {x:3650,y:3400,rx:200,ry:130},{x:590,y:4550,rx:210,ry:135},{x:1750,y:4700,rx:150,ry:100},
  {x:3000,y:4900,rx:230,ry:145},{x:3950,y:5350,rx:175,ry:120},{x:1050,y:6000,rx:230,ry:145},
- {x:2500,y:6100,rx:180,ry:115},{x:3600,y:6350,rx:210,ry:130},
- {x:410,y:1260,rx:135,ry:88},{x:1660,y:1360,rx:175,ry:105},{x:2740,y:1180,rx:145,ry:92},
- {x:4260,y:2680,rx:155,ry:100},{x:1450,y:2760,rx:125,ry:82},{x:2760,y:2850,rx:155,ry:96},
- {x:420,y:3780,rx:145,ry:95},{x:1570,y:3900,rx:160,ry:100},{x:2860,y:3950,rx:135,ry:88},
- {x:4200,y:4450,rx:150,ry:96},{x:1240,y:5200,rx:140,ry:90},{x:2460,y:5480,rx:150,ry:96}
+ {x:2500,y:6100,rx:180,ry:115},{x:3600,y:6350,rx:210,ry:130}
 ];
 const REEFS=[
  {x:1040,y:1040,r:38},{x:3480,y:1350,r:46},{x:2250,y:2280,r:42},
@@ -111,12 +104,8 @@ let repairCooldown=0,repairCooldownMax=12;
 
 
 function blockedByLand(x,y,r=18){
- // Expand every island by the ship radius, so collision follows the
- // actual size of the ship instead of only checking its centre point.
  for(const i of MAP_ISLANDS){
-   const safeRx=i.rx*1.05+r;
-   const safeRy=i.ry*1.05+r;
-   const nx=(x-i.x)/safeRx,ny=(y-i.y)/safeRy;
+   const nx=(x-i.x)/(i.rx*1.05),ny=(y-i.y)/(i.ry*1.05);
    if(nx*nx+ny*ny<1)return true;
  }
  for(const q of REEFS){
@@ -145,128 +134,16 @@ function findNearestSafeWater(x,y,r=18){
 }
 
 function rescuePlayerFromLand(){
- const rescueRadius=(player.r||13)+4;
- if(!blockedByLand(player.x,player.y,rescueRadius)) return;
- const safe=findNearestSafeWater(player.x,player.y,rescueRadius+4);
+ if(!blockedByLand(player.x,player.y,player.r)) return;
+ const safe=findNearestSafeWater(player.x,player.y,player.r);
  player.x=safe.x;
  player.y=safe.y;
  waterSplashes.push({x:player.x,y:player.y,life:700,max:700});
 }
-
-function clearanceFromLand(x,y,r=18){
- // Approximate free-water clearance. Larger value = safer/open water.
- let best=99999;
- for(const i of MAP_ISLANDS){
-   const dx=Math.abs(x-i.x),dy=Math.abs(y-i.y);
-   const edge=Math.max(dx-(i.rx*1.05+r),dy-(i.ry*1.05+r));
-   best=Math.min(best,edge);
- }
- for(const q of REEFS){
-   best=Math.min(best,Math.hypot(x-q.x,y-q.y)-(q.r+r));
- }
- return best;
-}
-
-function findOpenWaterSpawn(){
- // Prefer the allied half of the map and keep plenty of room from islands.
- const candidates=[
-   {x:WORLD.w*.50,y:WORLD.h*.90},
-   {x:WORLD.w*.36,y:WORLD.h*.86},
-   {x:WORLD.w*.64,y:WORLD.h*.86},
-   {x:WORLD.w*.50,y:WORLD.h*.78},
-   {x:WORLD.w*.30,y:WORLD.h*.76},
-   {x:WORLD.w*.70,y:WORLD.h*.76}
- ];
- let best=null,bestScore=-Infinity;
- for(const p of candidates){
-   if(blockedByLand(p.x,p.y,player.r+18))continue;
-   const score=clearanceFromLand(p.x,p.y,player.r+18);
-   if(score>bestScore){bestScore=score;best=p}
- }
- return best||findNearestSafeWater(WORLD.w/2,WORLD.h*.84,player.r+18);
-}
-
-function steerAroundLand(o,targetX,targetY,speed,dt){
- const dx=targetX-o.x,dy=targetY-o.y,d=Math.hypot(dx,dy)||1;
- const base=Math.atan2(dy,dx);
- const step=speed*dt;
- const angles=[0,.28,-.28,.55,-.55,.85,-.85,1.15,-1.15,Math.PI/2,-Math.PI/2];
- let chosen=null,best=-Infinity;
-
- for(const off of angles){
-   const a=base+off;
-   const nx=o.x+Math.cos(a)*step,ny=o.y+Math.sin(a)*step;
-   if(blockedByLand(nx,ny,o.r||14))continue;
-
-   // Look further ahead so AI starts turning before hitting the shoreline.
-   const look=72+(o.r||14)*2;
-   const lx=o.x+Math.cos(a)*look,ly=o.y+Math.sin(a)*look;
-   const clear=blockedByLand(lx,ly,(o.r||14)+4)?-300:clearanceFromLand(lx,ly,o.r||14);
-   const progress=-(Math.hypot(targetX-nx,targetY-ny));
-   const score=progress+clear*.22-Math.abs(off)*22;
-   if(score>best){best=score;chosen={nx,ny,a}}
- }
- if(chosen){
-   moveWithCollision(o,chosen.nx,chosen.ny);
-   o.a=chosen.a;
-   return true;
- }
- return false;
-}
-
-function impactFx(x,y,heavy=false){
- const count=heavy?28:14;
- for(let i=0;i<count;i++){
-   const a=Math.random()*Math.PI*2,sp=(heavy?90:55)+Math.random()*(heavy?260:150);
-   particles.push({
-     x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
-     life:(heavy?420:260)+Math.random()*260,
-     c:i%3===0?'#fff7c2':i%2?'#ff7a2f':'#ffd35c'
-   });
- }
- waterSplashes.push({x,y,life:heavy?900:520,max:heavy?900:520});
-}
-
-function navalExplosion(x,y,power=1){
- shake=Math.max(shake,7*power);
- impactFx(x,y,power>1.15);
- for(let ring=0;ring<3;ring++){
-   const count=18+ring*6;
-   for(let i=0;i<count;i++){
-     const a=i/count*Math.PI*2;
-     const sp=(85+ring*65)*power;
-     particles.push({
-       x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
-       life:340+ring*130,c:ring===0?'#fff0a4':ring===1?'#ff8b32':'#d94b24'
-     });
-   }
- }
-}
 function moveWithCollision(o,nx,ny){
- const r=o.r||14;
- const ox=o.x,oy=o.y;
- const dx=nx-ox,dy=ny-oy;
- const dist=Math.hypot(dx,dy);
-
- // Sweep movement in small steps. This prevents a fast ship from
- // skipping through a thin shoreline between two frames.
- const stepSize=Math.max(6,r*.45);
- const steps=Math.max(1,Math.ceil(dist/stepSize));
-
- for(let s=1;s<=steps;s++){
-   const t=s/steps;
-   const tx=ox+dx*t,ty=oy+dy*t;
-
-   if(!blockedByLand(tx,ty,r)){
-     o.x=tx;o.y=ty;
-     continue;
-   }
-
-   // Slide along the coast instead of becoming wedged into it.
-   if(!blockedByLand(tx,o.y,r))o.x=tx;
-   if(!blockedByLand(o.x,ty,r))o.y=ty;
-   break;
- }
+ if(!blockedByLand(nx,ny,o.r||14)){o.x=nx;o.y=ny;return}
+ if(!blockedByLand(nx,o.y,o.r||14))o.x=nx;
+ if(!blockedByLand(o.x,ny,o.r||14))o.y=ny;
 }
 function spawnPickup(x,y,amount=5){
  pickups.push({x,y,amount,life:12000,bob:Math.random()*6.28});
@@ -320,9 +197,8 @@ function drawLaneForces(){
 }
 
 function resetWave(){
- const spawn=findOpenWaterSpawn();
+ const spawn=findNearestSafeWater(WORLD.w/2,WORLD.h/2,player.r);
  player.x=spawn.x;player.y=spawn.y;
- player.r=13+shipTier*1.25;
  player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
  let n=10+Math.min(14,wave*3);
  enemies=[];laneUnits=[];laneSpawnTimer=1;
@@ -414,7 +290,7 @@ function shockWave(){
          life:300+Math.random()*220,c:i%2?'#6fe8ff':'#d8fbff'
        });
      }
-     if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);navalExplosion(e.x,e.y,e.boss?1.45:1);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)}
+     if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);boom(e.x,e.y);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)}
    }
  }
 
@@ -493,13 +369,8 @@ function update(dt){
 
  enemies.forEach(e=>{
    let dx=player.x-e.x,dy=player.y-e.y,d=Math.hypot(dx,dy)||1;e.a=Math.atan2(dy,dx);
-   if(d<760&&d>150){
-     const chaseSpeed=e.boss?40:56;
-     steerAroundLand(e,player.x,player.y,chaseSpeed,dt);
-   }else if(d<=150){
-     // Circle slightly at close range instead of ramming into the player/shore.
-     const orbit=e.a+(e.type%2?1:-1)*Math.PI/2;
-     const nx=e.x+Math.cos(orbit)*32*dt,ny=e.y+Math.sin(orbit)*32*dt;
+   if(d<720&&d>145){
+     const nx=e.x+dx/d*(e.boss?38:52)*dt,ny=e.y+dy/d*(e.boss?38:52)*dt;
      moveWithCollision(e,nx,ny);
    }
    e.cd-=dt*1000;
@@ -508,23 +379,14 @@ function update(dt){
      bullets.push({x:e.x,y:e.y,vx:dx/d*270,vy:dy/d*270,life:2600,f:false});
    }
  });
- bullets.forEach(b=>{
-   b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt*1000;
-   if(Math.random()<dt*(b.heavy?28:13)){
-     particles.push({
-       x:b.x-b.vx*.025,y:b.y-b.vy*.025,
-       vx:(Math.random()-.5)*24,vy:(Math.random()-.5)*24,
-       life:b.heavy?260:160,c:b.f?'#e6f7ff':'#ffd0b4'
-     });
-   }
- });
+ bullets.forEach(b=>{b.x+=b.vx*dt;b.y+=b.vy*dt;b.life-=dt*1000});
  bullets.forEach(b=>{
    if(b.life<=0)return;
    if(b.f){
      for(let e of enemies)if(Math.hypot(b.x-e.x,b.y-e.y)<e.r+9){
-       e.hp-=(b.damage||35);b.life=0;impactFx(b.x,b.y,!!b.heavy);if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);navalExplosion(e.x,e.y,e.boss?1.45:1);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)};break;
+       e.hp-=(b.damage||35);b.life=0;muzzle(b.x,b.y);if(e.hp<=0){awardCoins(e.boss?50:10,player.x,player.y);boom(e.x,e.y);if(Math.random()<.45)spawnPickup(e.x,e.y,e.boss?20:5)};break;
      }
-   }else if(Math.hypot(b.x-player.x,b.y-player.y)<player.r+7){player.hp-=8;b.life=0;shake=5;impactFx(b.x,b.y,false)}
+   }else if(Math.hypot(b.x-player.x,b.y-player.y)<player.r+7){player.hp-=8;b.life=0;shake=5}
  });
  enemies=enemies.filter(e=>e.hp>0);
  bullets=bullets.filter(b=>b.life>0&&b.x>-80&&b.x<WORLD.w+80&&b.y>-80&&b.y<WORLD.h+80);
@@ -542,7 +404,7 @@ function update(dt){
  });
  pickups=pickups.filter(p=>p.life>0);
 
- if(ambientShips.length<18 && Math.random()<dt*.72){
+ if(ambientShips.length<14 && Math.random()<dt*.55){
    const edge=Math.random()<.5?0:1;
    ambientShips.push({x:120+Math.random()*(WORLD.w-240),y:edge?WORLD.h-120:120,a:edge?-Math.PI/2:Math.PI/2,
      speed:26+Math.random()*24,life:70000,kind:Math.random()<.35?'merchant':'patrol'});
@@ -551,14 +413,6 @@ function update(dt){
    s.y+=Math.sin(s.a)*s.speed*dt;s.life-=dt*1000;
  });
  ambientShips=ambientShips.filter(s=>s.life>0&&s.y>80&&s.y<WORLD.h-80);
-
- // Occasional distant battle flashes make the sea feel alive.
- if(Math.random()<dt*.9){
-   const fx=player.x+(Math.random()-.5)*900,fy=player.y+(Math.random()-.5)*1200;
-   if(fx>80&&fx<WORLD.w-80&&fy>80&&fy<WORLD.h-80&&!blockedByLand(fx,fy,8)){
-     particles.push({x:fx,y:fy,vx:0,vy:0,life:120,c:'#ffd783'});
-   }
- }
 
  if(player.hp<=0){player.hp=player.max;coins=Math.max(0,coins-10);resetWave()}
  if(enemies.length===0){wave++;resetWave()}
@@ -570,25 +424,13 @@ function visible(o,pad=180){let x=screenX(o.x),y=screenY(o.y);return x>-pad&&x<W
 function drawSprite(im,o,size){
  const _ambient=typeof ambientShips!=='undefined'&&ambientShips.includes(o);
  const _enemy=o!==player&&!_ambient;
-
- // Player: one fixed battleship image, enlarged as the ship level rises.
- if(o===player && PLAYER_BATTLESHIP_ART.complete && PLAYER_BATTLESHIP_ART.naturalWidth){
-   const _sx=screenX(o.x),_sy=screenY(o.y);
-   const _scale=PLAYER_SHIP_SCALE[Math.max(0,Math.min(PLAYER_SHIP_SCALE.length-1,shipTier))];
-   const _base=108;
-   const _w=_base*_scale;
-   const _h=_w*(PLAYER_BATTLESHIP_ART.naturalHeight/PLAYER_BATTLESHIP_ART.naturalWidth);
-   ctx.save();
-   ctx.translate(_sx,_sy);
-   ctx.rotate(o.a+Math.PI/2);
-   ctx.globalAlpha=1;
-   ctx.filter='brightness(1.42) contrast(1.12) saturate(1.22) drop-shadow(0 3px 3px rgba(0,0,0,.55))';
-   ctx.shadowColor='#7cecff';
-   ctx.shadowBlur=8;
-   ctx.drawImage(PLAYER_BATTLESHIP_ART,-_w/2,-_h/2,_w,_h);
-   ctx.restore();
-   ctx.filter='none';
-   return;
+ let _tier=o===player?shipTier:(_enemy?(o.boss?8:Math.min(7,(o.type||1)+2)):3);
+ const _src=V51_ASSET_PATHS[Math.max(0,Math.min(7,_tier-1))],_art=V51_ART[_src];
+ if(_art&&_art.complete&&_art.naturalWidth){
+   const _sx=screenX(o.x),_sy=screenY(o.y),_w=size*2.15,_h=_w*(_art.naturalHeight/_art.naturalWidth);
+   ctx.save();ctx.translate(_sx,_sy);ctx.rotate(o.a+Math.PI/2);
+   if(_enemy){ctx.globalAlpha=.92;ctx.filter='sepia(.18) saturate(1.12) hue-rotate(330deg)';}
+   ctx.drawImage(_art,-_w/2,-_h/2,_w,_h);ctx.restore();ctx.filter='none';return;
  }
 
  const sx=screenX(o.x),sy=screenY(o.y),ambient=ambientShips.includes(o),enemy=o!==player&&!ambient;
@@ -639,12 +481,12 @@ function drawSprite(im,o,size){
 }
 function drawWorldBackground(){
  const g=ctx.createLinearGradient(0,0,W,H);
- g.addColorStop(0,'#031c3b');g.addColorStop(.48,'#063f63');g.addColorStop(1,'#03152f');
+ g.addColorStop(0,'#050c2f');g.addColorStop(.48,'#071b4b');g.addColorStop(1,'#050a24');
  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 
  // Deep-water flowing streaks
  ctx.save();
- ctx.globalAlpha=.24;ctx.strokeStyle='#42a6c4';ctx.lineWidth=2;
+ ctx.globalAlpha=.16;ctx.strokeStyle='#285c92';ctx.lineWidth=2;
  for(let wy=Math.floor(camera.y/76)*76;wy<camera.y+H+76;wy+=76){
    const y=wy-camera.y;
    for(let wx=Math.floor(camera.x/150)*150;wx<camera.x+W+180;wx+=150){
@@ -661,8 +503,8 @@ function drawWorldBackground(){
    ctx.save();ctx.translate(x,y);ctx.rotate((n%5-2)*.08);
 
    // murky shallow ring
-   ctx.fillStyle='#53d7c268';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
-   ctx.strokeStyle='#b7f1d97a';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
+   ctx.fillStyle='#4f8c8250';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
+   ctx.strokeStyle='#80afa05c';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
 
    // rugged shoreline
    let pts=[];
@@ -671,16 +513,16 @@ function drawWorldBackground(){
      let noise=1+Math.sin(k*2.17+n)*.08+Math.sin(k*5.3+n*.8)*.045;
      pts.push([Math.cos(a)*i.rx*noise,Math.sin(a)*i.ry*noise]);
    }
-   ctx.fillStyle='#776b48';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
+   ctx.fillStyle='#54614a';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
    // inner dark soil/forest floor
-   ctx.fillStyle='#153822';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
+   ctx.fillStyle='#15291f';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
 
    // many dense tree crowns
    for(let k=0;k<52;k++){
      const a=k*2.399+n*.6,rr=.08+(k%9)*.085;
      const tx=Math.cos(a)*i.rx*rr,ty=Math.sin(a)*i.ry*rr*.84;
      const r=5+(k%5)*1.8;
-     ctx.fillStyle=k%4===0?'#0d3d25':k%4===1?'#14552c':k%4===2?'#1d6933':'#28783a';
+     ctx.fillStyle=k%4===0?'#0b2f23':k%4===1?'#103c29':k%4===2?'#17472d':'#1c5532';
      ctx.beginPath();ctx.arc(tx,ty,r,0,7);ctx.fill();
    }
 
@@ -868,7 +710,7 @@ function draw(){
  ctx.lineTo(px+Math.cos(player.a)*38,py+Math.sin(player.a)*38);ctx.stroke();
  ctx.restore();
 
- bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=28;ctx.lineWidth=b.heavy?10:5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
+ bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=22;ctx.lineWidth=b.heavy?8:4;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
  particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
  floatingTexts.forEach(f=>{
    let x=screenX(f.x),y=screenY(f.y);
@@ -939,8 +781,6 @@ function upgradeShip(){
  const ratio=Math.max(.35,player.hp/player.max);
  player.max=s.hp; player.hp=Math.round(s.hp*ratio);
  player.speed=s.speed; autoFireRate=s.rate; autoRange=s.range;
- // Slightly increase collision radius as the same battleship grows visually.
- player.r=13+shipTier*1.25;
  boom(player.x,player.y); updateHUD();
 }
 $('#upgradeShip')?.addEventListener('pointerdown',e=>{e.preventDefault();upgradeShip()});
