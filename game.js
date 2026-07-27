@@ -1,3 +1,5 @@
+// ===== V5.1.3 VISUAL UPGRADE =====
+// Brighter/larger player ship, softer locator, richer ocean/islands and stronger battle FX.
 
 // ===== V5.1.1 COLLISION HOTFIX =====
 // Fix: player can no longer spawn/stay trapped inside an island.
@@ -429,7 +431,15 @@ function drawSprite(im,o,size){
  if(_art&&_art.complete&&_art.naturalWidth){
    const _sx=screenX(o.x),_sy=screenY(o.y),_w=size*2.15,_h=_w*(_art.naturalHeight/_art.naturalWidth);
    ctx.save();ctx.translate(_sx,_sy);ctx.rotate(o.a+Math.PI/2);
-   if(_enemy){ctx.globalAlpha=.92;ctx.filter='sepia(.18) saturate(1.12) hue-rotate(330deg)';}
+   if(_enemy){
+     ctx.globalAlpha=.94;
+     ctx.filter='brightness(1.22) contrast(1.10) saturate(1.18) sepia(.12) hue-rotate(330deg)';
+   }else if(o===player){
+     ctx.globalAlpha=1;
+     ctx.filter='brightness(1.65) contrast(1.12) saturate(1.30)';
+   }else{
+     ctx.filter='brightness(1.28) contrast(1.08) saturate(1.15)';
+   }
    ctx.drawImage(_art,-_w/2,-_h/2,_w,_h);ctx.restore();ctx.filter='none';return;
  }
 
@@ -481,12 +491,12 @@ function drawSprite(im,o,size){
 }
 function drawWorldBackground(){
  const g=ctx.createLinearGradient(0,0,W,H);
- g.addColorStop(0,'#050c2f');g.addColorStop(.48,'#071b4b');g.addColorStop(1,'#050a24');
+ g.addColorStop(0,'#071a46');g.addColorStop(.48,'#0a3264');g.addColorStop(1,'#071538');
  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 
  // Deep-water flowing streaks
  ctx.save();
- ctx.globalAlpha=.16;ctx.strokeStyle='#285c92';ctx.lineWidth=2;
+ ctx.globalAlpha=.25;ctx.strokeStyle='#4b91bd';ctx.lineWidth=2;
  for(let wy=Math.floor(camera.y/76)*76;wy<camera.y+H+76;wy+=76){
    const y=wy-camera.y;
    for(let wx=Math.floor(camera.x/150)*150;wx<camera.x+W+180;wx+=150){
@@ -503,8 +513,8 @@ function drawWorldBackground(){
    ctx.save();ctx.translate(x,y);ctx.rotate((n%5-2)*.08);
 
    // murky shallow ring
-   ctx.fillStyle='#4f8c8250';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
-   ctx.strokeStyle='#80afa05c';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
+   ctx.fillStyle='#69b6a06b';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
+   ctx.strokeStyle='#a6d6bb78';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
 
    // rugged shoreline
    let pts=[];
@@ -513,9 +523,9 @@ function drawWorldBackground(){
      let noise=1+Math.sin(k*2.17+n)*.08+Math.sin(k*5.3+n*.8)*.045;
      pts.push([Math.cos(a)*i.rx*noise,Math.sin(a)*i.ry*noise]);
    }
-   ctx.fillStyle='#54614a';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
+   ctx.fillStyle='#667552';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
    // inner dark soil/forest floor
-   ctx.fillStyle='#15291f';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
+   ctx.fillStyle='#173b27';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
 
    // many dense tree crowns
    for(let k=0;k<52;k++){
@@ -548,7 +558,7 @@ function drawWorldBackground(){
 
  // smoky dark vignette
  const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.18,W/2,H/2,Math.max(W,H)*.72);
- v.addColorStop(.45,'#0000');v.addColorStop(1,'#0009');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+ v.addColorStop(.48,'#0000');v.addColorStop(1,'#0005');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
 function drawMiniMap(){
  const mw=118,mh=118,x=W-mw-18,y=120;
@@ -680,8 +690,8 @@ function draw(){
 
  // subtle unexplored-war atmosphere
  let fog=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.20,W/2,H/2,Math.max(W,H)*.78);
- fog.addColorStop(0,'#0000');fog.addColorStop(1,'#00000055');ctx.fillStyle=fog;ctx.fillRect(0,0,W,H);
- let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b44');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0008');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+ fog.addColorStop(0,'#0000');fog.addColorStop(1,'#0000002f');ctx.fillStyle=fog;ctx.fillRect(0,0,W,H);
+ let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b24');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0008');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
 
  drawLaneForces();
  enemies.forEach(e=>{
@@ -695,22 +705,22 @@ function draw(){
    ctx.fillStyle='#351013';ctx.fillRect(sx-36,sy-70,72,8);
    ctx.fillStyle=e.boss?'#ff9a2d':'#ff4047';ctx.fillRect(sx-36,sy-70,72*Math.max(0,e.hp/e.max),8);
  });
- drawSprite(null,player,Math.max(34,SHIPS[shipTier].size*.78));drawUnitHealth(player,50);
+ drawSprite(null,player,Math.max(46,SHIPS[shipTier].size*1.02));drawUnitHealth(player,58);
  let px=screenX(player.x),py=screenY(player.y);
  // High-contrast player locator: soft dark plate + cyan dual ring + direction tick.
  ctx.save();
- ctx.fillStyle='#00181499';
- ctx.beginPath();ctx.arc(px,py,31,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#00181455';
+ ctx.beginPath();ctx.arc(px,py,27,0,Math.PI*2);ctx.fill();
  ctx.strokeStyle='#77fff3';ctx.lineWidth=3;ctx.shadowColor='#00ffe5';ctx.shadowBlur=20;
- ctx.beginPath();ctx.arc(px,py,28,0,Math.PI*2);ctx.stroke();
+ ctx.beginPath();ctx.arc(px,py,32,0,Math.PI*2);ctx.stroke();
  ctx.shadowBlur=0;ctx.strokeStyle='#00bfaeaa';ctx.lineWidth=1.5;
- ctx.beginPath();ctx.arc(px,py,34,0,Math.PI*2);ctx.stroke();
+ ctx.beginPath();ctx.arc(px,py,38,0,Math.PI*2);ctx.stroke();
  ctx.strokeStyle='#fff6';ctx.lineWidth=2;
  ctx.beginPath();ctx.moveTo(px+Math.cos(player.a)*28,py+Math.sin(player.a)*28);
  ctx.lineTo(px+Math.cos(player.a)*38,py+Math.sin(player.a)*38);ctx.stroke();
  ctx.restore();
 
- bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=22;ctx.lineWidth=b.heavy?8:4;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
+ bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=28;ctx.lineWidth=b.heavy?10:5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
  particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
  floatingTexts.forEach(f=>{
    let x=screenX(f.x),y=screenY(f.y);
