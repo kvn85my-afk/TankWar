@@ -1,5 +1,5 @@
-// ===== BattleShip V6.0 ULTIMATE VISUAL EDITION =====
-// Major visual pass: full asset ocean/islands/harbors/effects, no player cyan ring.
+// ===== BattleShip V6.1 SAFE VISUAL UPGRADE =====
+// Based on the last stable V5 structure. No giant environment texture tiling.
 
 // ===== V5.1.1 COLLISION HOTFIX =====
 // Fix: player can no longer spawn/stay trapped inside an island.
@@ -12,36 +12,6 @@ const V51_ASSET_PATHS=[
 ];
 const V51_ART={};
 V51_ASSET_PATHS.forEach(src=>{const im=new Image();im.src=src;V51_ART[src]=im;});
-
-// ===== V6.0 ULTIMATE VISUAL ASSETS =====
-const V6_PATHS={
- ocean:'assets/environment/ocean_deep.png',
- shallow:'assets/environment/ocean_shallow.png',
- reef:'assets/environment/reef_water.png',
- palms:'assets/environment/palm_cluster.png',
- rocks:'assets/environment/rock_cluster.png',
- coastal:'assets/environment/coastal_props.png',
- island1:'assets/islands/island_tropical_01.png',
- island2:'assets/islands/island_rocky_02.png',
- island3:'assets/islands/island_forest_03.png',
- harbor:'assets/buildings/harbor_port.png',
- dock:'assets/buildings/dock_piece.png',
- flash:'assets/effects/cannon_flash.png',
- tracer:'assets/effects/cannon_tracer.png',
- explosion:'assets/effects/hull_explosion.png',
- wake:'assets/effects/wake.png',
- splash:'assets/effects/water_splash.png',
- smoke:'assets/effects/fire_smoke.png'
-};
-const V6_ART={};
-Object.entries(V6_PATHS).forEach(([k,src])=>{const im=new Image();im.src=src;V6_ART[k]=im;});
-function v6Ready(k){const im=V6_ART[k];return !!(im&&im.complete&&im.naturalWidth)}
-function v6Draw(k,x,y,w,h,rot=0,alpha=1,filter='none'){
- const im=V6_ART[k]; if(!v6Ready(k))return false;
- ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=alpha;ctx.filter=filter;
- ctx.drawImage(im,-w/2,-h/2,w,h);ctx.restore();ctx.filter='none';ctx.globalAlpha=1;return true;
-}
-
 
 const c=document.querySelector('#c'),ctx=c.getContext('2d');let W,H,DPR;
 const $=s=>document.querySelector(s);
@@ -375,16 +345,8 @@ function awardCoins(amount,x=player.x,y=player.y){
  updateHUD();
 }
 
-function muzzle(x,y){
- for(let i=0;i<14;i++)particles.push({x,y,vx:(Math.random()-.5)*175,vy:(Math.random()-.5)*175,life:260,c:i%2?'#ffb42d':'#fff2a0'});
- particles.push({x,y,vx:0,vy:0,life:180,c:'#ffffff',sprite:'flash',spriteSize:64});
-}
-function boom(x,y){
- shake=13;
- for(let i=0;i<42;i++)particles.push({x,y,vx:(Math.random()-.5)*320,vy:(Math.random()-.5)*320,life:380+Math.random()*620,c:i%3?'#ff6b20':'#ffd45a'});
- particles.push({x,y,vx:0,vy:0,life:520,c:'#fff',sprite:'explosion',spriteSize:128});
- particles.push({x,y:y+8,vx:0,vy:-18,life:900,c:'#888',sprite:'smoke',spriteSize:105});
-}
+function muzzle(x,y){for(let i=0;i<12;i++)particles.push({x,y,vx:(Math.random()-.5)*160,vy:(Math.random()-.5)*160,life:250,c:i%2?'#ffb42d':'#fff2a0'})}
+function boom(x,y){shake=11;for(let i=0;i<44;i++)particles.push({x,y,vx:(Math.random()-.5)*300,vy:(Math.random()-.5)*300,life:380+Math.random()*600,c:i%4===0?'#fff1a0':i%3?'#ff6b20':'#ffd45a'})}
 function update(dt){
  if(paused)return;
  // Safety net for old saves/map edits: never allow the player to remain trapped inside land.
@@ -470,13 +432,13 @@ function drawSprite(im,o,size){
    const _sx=screenX(o.x),_sy=screenY(o.y),_w=size*2.15,_h=_w*(_art.naturalHeight/_art.naturalWidth);
    ctx.save();ctx.translate(_sx,_sy);ctx.rotate(o.a+Math.PI/2);
    if(_enemy){
-     ctx.globalAlpha=.96;
-     ctx.filter='brightness(1.34) contrast(1.12) saturate(1.20) sepia(.10) hue-rotate(330deg)';
+     ctx.globalAlpha=.95;
+     ctx.filter='brightness(1.20) contrast(1.08) saturate(1.12) sepia(.12) hue-rotate(330deg)';
    }else if(o===player){
      ctx.globalAlpha=1;
-     ctx.filter='brightness(1.82) contrast(1.15) saturate(1.34) drop-shadow(0 5px 8px rgba(0,0,0,.72))';
+     ctx.filter='brightness(1.55) contrast(1.12) saturate(1.22) drop-shadow(0 4px 5px rgba(0,0,0,.65))';
    }else{
-     ctx.filter='brightness(1.35) contrast(1.10) saturate(1.18)';
+     ctx.filter='brightness(1.18) contrast(1.06) saturate(1.10)';
    }
    ctx.drawImage(_art,-_w/2,-_h/2,_w,_h);ctx.restore();ctx.filter='none';return;
  }
@@ -528,54 +490,75 @@ function drawSprite(im,o,size){
  ctx.restore();
 }
 function drawWorldBackground(){
- // Rich deep-ocean tiled texture
- ctx.fillStyle='#062552';ctx.fillRect(0,0,W,H);
- if(v6Ready('ocean')){
-   const im=V6_ART.ocean,tw=355,th=235;
-   const ox=-((camera.x*.20)%tw),oy=-((camera.y*.20)%th);
-   ctx.save();ctx.globalAlpha=.92;ctx.filter='brightness(1.24) saturate(1.18) contrast(1.08)';
-   for(let y=oy-th;y<H+th;y+=th)for(let x=ox-tw;x<W+tw;x+=tw)ctx.drawImage(im,x,y,tw,th);
-   ctx.restore();ctx.filter='none';
- }
- // moving highlights
- ctx.save();ctx.globalAlpha=.18;ctx.strokeStyle='#85d7ff';ctx.lineWidth=1.6;
- for(let wy=Math.floor(camera.y/95)*95;wy<camera.y+H+95;wy+=95){
+ const g=ctx.createLinearGradient(0,0,W,H);
+ g.addColorStop(0,'#07173c');g.addColorStop(.48,'#09315b');g.addColorStop(1,'#07132f');
+ ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+ // Deep-water flowing streaks
+ ctx.save();
+ ctx.globalAlpha=.22;ctx.strokeStyle='#3f7ca8';ctx.lineWidth=2;
+ for(let wy=Math.floor(camera.y/76)*76;wy<camera.y+H+76;wy+=76){
    const y=wy-camera.y;
-   for(let wx=Math.floor(camera.x/190)*190;wx<camera.x+W+220;wx+=190){
-     const x=wx-camera.x+(wy%190)*.16;
-     ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x+30,y-5,x+65,y+6,x+95,y);ctx.stroke();
+   for(let wx=Math.floor(camera.x/150)*150;wx<camera.x+W+180;wx+=150){
+     const x=wx-camera.x;
+     ctx.beginPath();ctx.moveTo(x,y);ctx.bezierCurveTo(x+25,y-8,x+55,y+7,x+82,y);ctx.stroke();
    }
- }ctx.restore();
+ }
+ ctx.restore();
 
- // Asset islands with shallow-water halos
- const islandKeys=['island1','island3','island2'];
- MAP_ISLANDS.forEach((i,n)=>{
-   const x=i.x-camera.x,y=i.y-camera.y;
-   if(x<-i.rx*2||x>W+i.rx*2||y<-i.ry*2||y>H+i.ry*2)return;
-   const rot=(n%5-2)*.09;
-   if(v6Ready('shallow')){
-     ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=.58;ctx.filter='brightness(1.14) saturate(1.18)';
-     ctx.drawImage(V6_ART.shallow,-i.rx*1.38,-i.ry*1.32,i.rx*2.76,i.ry*2.64);ctx.restore();ctx.filter='none';
-   } else {
-     ctx.fillStyle='#61b8a755';ctx.beginPath();ctx.ellipse(x,y,i.rx*1.22,i.ry*1.22,rot,0,7);ctx.fill();
+ // Dense organic islands, darker like Warcraft III terrain.
+ for(let n=0;n<MAP_ISLANDS.length;n++){
+   const i=MAP_ISLANDS[n],x=i.x-camera.x,y=i.y-camera.y;
+   if(x<-i.rx*1.8||x>W+i.rx*1.8||y<-i.ry*1.8||y>H+i.ry*1.8)continue;
+   ctx.save();ctx.translate(x,y);ctx.rotate((n%5-2)*.08);
+
+   // murky shallow ring
+   ctx.fillStyle='#65aa9460';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
+   ctx.strokeStyle='#8fc7ad70';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
+
+   // rugged shoreline
+   let pts=[];
+   for(let k=0;k<44;k++){
+     let a=k/44*Math.PI*2;
+     let noise=1+Math.sin(k*2.17+n)*.08+Math.sin(k*5.3+n*.8)*.045;
+     pts.push([Math.cos(a)*i.rx*noise,Math.sin(a)*i.ry*noise]);
    }
-   const key=islandKeys[n%islandKeys.length];
-   if(!v6Draw(key,x,y,i.rx*2.15,i.ry*2.10,rot,1,'brightness(1.12) saturate(1.15) contrast(1.05)')){
-     ctx.fillStyle='#31572f';ctx.beginPath();ctx.ellipse(x,y,i.rx,i.ry,rot,0,7);ctx.fill();
+   ctx.fillStyle='#657052';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
+   // inner dark soil/forest floor
+   ctx.fillStyle='#173526';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
+
+   // many dense tree crowns
+   for(let k=0;k<52;k++){
+     const a=k*2.399+n*.6,rr=.08+(k%9)*.085;
+     const tx=Math.cos(a)*i.rx*rr,ty=Math.sin(a)*i.ry*rr*.84;
+     const r=5+(k%5)*1.8;
+     ctx.fillStyle=k%4===0?'#0d3826':k%4===1?'#14502f':k%4===2?'#1c6036':'#28723d';
+     ctx.beginPath();ctx.arc(tx,ty,r,0,7);ctx.fill();
    }
-   // vegetation / rocks add density
-   if(n%2===0)v6Draw('palms',x+i.rx*.08,y-i.ry*.05,i.rx*1.35,i.ry*1.18,rot+.03,.82,'brightness(1.06)');
-   if(n%3===0)v6Draw('rocks',x-i.rx*.18,y+i.ry*.20,i.rx*.92,i.ry*.72,rot-.04,.88,'brightness(1.05)');
- });
 
- REEFS.forEach((q,n)=>{
-   const x=q.x-camera.x,y=q.y-camera.y;if(x<-100||x>W+100||y<-100||y>H+100)return;
-   v6Draw('reef',x,y,q.r*3.25,q.r*2.05,(n%4)*.18,.82,'brightness(1.18) saturate(1.2)');
- });
+   // shoreline rocks / ruins
+   ctx.fillStyle='#6b6f67';
+   for(let k=0;k<13;k++){
+     let a=k*.71+n*.35;
+     ctx.beginPath();ctx.ellipse(Math.cos(a)*i.rx*.83,Math.sin(a)*i.ry*.68,4+(k%3)*3,3+(k%2)*2,a,0,7);ctx.fill();
+   }
+   if(n%3===0){
+     ctx.fillStyle='#2c2c28';ctx.fillRect(-9,-18,18,20);ctx.fillStyle='#535449';ctx.fillRect(-14,-22,28,6);
+   }
+   ctx.restore();
+ }
 
- // Cinematic edge vignette, intentionally lighter than V5
- const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.22,W/2,H/2,Math.max(W,H)*.78);
- v.addColorStop(.48,'#0000');v.addColorStop(1,'#0004');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
+ // reefs
+ for(const q of REEFS){
+   const x=q.x-camera.x,y=q.y-camera.y;if(x<-90||x>W+90||y<-90||y>H+90)continue;
+   ctx.save();ctx.globalAlpha=.85;ctx.fillStyle='#4f5b5f';
+   for(let k=0;k<9;k++){let a=k*.72;ctx.beginPath();ctx.arc(x+Math.cos(a)*q.r*.45,y+Math.sin(a)*q.r*.33,4+(k%4)*2,0,7);ctx.fill()}
+   ctx.strokeStyle='#698f8d66';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(x,y,q.r*1.1,q.r*.62,.25,0,7);ctx.stroke();ctx.restore();
+ }
+
+ // smoky dark vignette
+ const v=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.18,W/2,H/2,Math.max(W,H)*.72);
+ v.addColorStop(.48,'#0000');v.addColorStop(1,'#0005');ctx.fillStyle=v;ctx.fillRect(0,0,W,H);
 }
 function drawMiniMap(){
  const mw=118,mh=118,x=W-mw-18,y=120;
@@ -593,12 +576,8 @@ function drawWorldElements(){
  PORTS.forEach(p=>{
    const x=p.x-camera.x,y=p.y-camera.y;if(x<-220||x>W+220||y<-150||y>H+150)return;
    ctx.save();
-   // V6 high-detail harbor asset
-   if(v6Ready('harbor')){
-     v6Draw('harbor',x,y,260,175,p.team==='enemy'?Math.PI:0,1,'brightness(1.16) saturate(1.10)');
-   }
    // stone harbor platform
-   ctx.globalAlpha=v6Ready('harbor')?.16:1;ctx.fillStyle='#403d34';ctx.fillRect(x-120,y-35,240,70);ctx.globalAlpha=1;
+   ctx.fillStyle='#403d34';ctx.fillRect(x-120,y-35,240,70);
    ctx.strokeStyle='#756b54';ctx.lineWidth=3;ctx.strokeRect(x-120,y-35,240,70);
    // wooden piers
    ctx.fillStyle='#77593a';
@@ -711,8 +690,8 @@ function draw(){
 
  // subtle unexplored-war atmosphere
  let fog=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.20,W/2,H/2,Math.max(W,H)*.78);
- fog.addColorStop(0,'#0000');fog.addColorStop(1,'#00000055');ctx.fillStyle=fog;ctx.fillRect(0,0,W,H);
- let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b44');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0008');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
+ fog.addColorStop(0,'#0000');fog.addColorStop(1,'#00000032');ctx.fillStyle=fog;ctx.fillRect(0,0,W,H);
+ let shade=ctx.createLinearGradient(0,0,0,H);shade.addColorStop(0,'#00120b25');shade.addColorStop(.62,'#0000');shade.addColorStop(1,'#0008');ctx.fillStyle=shade;ctx.fillRect(0,0,W,H);
 
  drawLaneForces();
  enemies.forEach(e=>{
@@ -726,30 +705,19 @@ function draw(){
    ctx.fillStyle='#351013';ctx.fillRect(sx-36,sy-70,72,8);
    ctx.fillStyle=e.boss?'#ff9a2d':'#ff4047';ctx.fillRect(sx-36,sy-70,72*Math.max(0,e.hp/e.max),8);
  });
-if(v6Ready('wake')){
-   const wx=screenX(player.x-Math.cos(player.a)*28),wy=screenY(player.y-Math.sin(player.a)*28);
-   v6Draw('wake',wx,wy,92,68,player.a+Math.PI/2,.58,'brightness(1.25)');
- }
- drawSprite(null,player,Math.max(54,SHIPS[shipTier].size*1.18));drawUnitHealth(player,62);
+ drawSprite(null,player,Math.max(44,SHIPS[shipTier].size*.98));drawUnitHealth(player,56);
  let px=screenX(player.x),py=screenY(player.y);
- // V6: no large cyan locator ring. Only a tiny direction tick remains.
+ // V6.1: cyan locator ring removed. Keep only a subtle heading tick.
  ctx.save();
- ctx.strokeStyle='#fff9';ctx.lineWidth=2.2;
- ctx.beginPath();ctx.moveTo(px+Math.cos(player.a)*31,py+Math.sin(player.a)*31);
- ctx.lineTo(px+Math.cos(player.a)*42,py+Math.sin(player.a)*42);ctx.stroke();
+ ctx.strokeStyle='#ffffffaa';ctx.lineWidth=2;
+ ctx.beginPath();
+ ctx.moveTo(px+Math.cos(player.a)*28,py+Math.sin(player.a)*28);
+ ctx.lineTo(px+Math.cos(player.a)*37,py+Math.sin(player.a)*37);
+ ctx.stroke();
  ctx.restore();
 
- bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=30;ctx.lineWidth=b.heavy?11:5.5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
- particles.forEach(p=>{
- if(!visible(p,100))return;let x=screenX(p.x),y=screenY(p.y);
- if(p.sprite&&v6Ready(p.sprite)){
-   const a=Math.min(1,p.life/(p.sprite==='smoke'?700:260));
-   v6Draw(p.sprite,x,y,p.spriteSize||82,p.spriteSize||82,0,a,p.sprite==='smoke'?'brightness(.95)':'brightness(1.18) saturate(1.2)');
-   return;
- }
- ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=20;
- ctx.beginPath();ctx.arc(x,y,2+Math.min(7,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1
-});
+ bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=28;ctx.lineWidth=b.heavy?9:5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
+ particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
  floatingTexts.forEach(f=>{
    let x=screenX(f.x),y=screenY(f.y);
    let a=Math.max(0,Math.min(1,f.life/f.maxLife));
