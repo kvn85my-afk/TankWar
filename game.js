@@ -1,4 +1,6 @@
 
+// ===== V5.4 TROPICAL WARZONE VISUAL UPGRADE =====
+// Denser tropical islands, brighter player ship, stronger battle readability and FX.
 // ===== V5.2 GAMEPLAY + AI UPGRADE =====
 // Safer spawn water, island-aware enemy steering, stronger battle FX, denser sea atmosphere.
 // Fix: player can no longer spawn/stay trapped inside an island.
@@ -61,7 +63,11 @@ const MAP_ISLANDS=[
  {x:3200,y:2300,rx:215,ry:135},{x:930,y:3200,rx:235,ry:150},{x:2250,y:3350,rx:170,ry:110},
  {x:3650,y:3400,rx:200,ry:130},{x:590,y:4550,rx:210,ry:135},{x:1750,y:4700,rx:150,ry:100},
  {x:3000,y:4900,rx:230,ry:145},{x:3950,y:5350,rx:175,ry:120},{x:1050,y:6000,rx:230,ry:145},
- {x:2500,y:6100,rx:180,ry:115},{x:3600,y:6350,rx:210,ry:130}
+ {x:2500,y:6100,rx:180,ry:115},{x:3600,y:6350,rx:210,ry:130},
+ {x:410,y:1260,rx:135,ry:88},{x:1660,y:1360,rx:175,ry:105},{x:2740,y:1180,rx:145,ry:92},
+ {x:4260,y:2680,rx:155,ry:100},{x:1450,y:2760,rx:125,ry:82},{x:2760,y:2850,rx:155,ry:96},
+ {x:420,y:3780,rx:145,ry:95},{x:1570,y:3900,rx:160,ry:100},{x:2860,y:3950,rx:135,ry:88},
+ {x:4200,y:4450,rx:150,ry:96},{x:1240,y:5200,rx:140,ry:90},{x:2460,y:5480,rx:150,ry:96}
 ];
 const REEFS=[
  {x:1040,y:1040,r:38},{x:3480,y:1350,r:46},{x:2250,y:2280,r:42},
@@ -536,7 +542,7 @@ function update(dt){
  });
  pickups=pickups.filter(p=>p.life>0);
 
- if(ambientShips.length<14 && Math.random()<dt*.55){
+ if(ambientShips.length<18 && Math.random()<dt*.72){
    const edge=Math.random()<.5?0:1;
    ambientShips.push({x:120+Math.random()*(WORLD.w-240),y:edge?WORLD.h-120:120,a:edge?-Math.PI/2:Math.PI/2,
      speed:26+Math.random()*24,life:70000,kind:Math.random()<.35?'merchant':'patrol'});
@@ -569,14 +575,14 @@ function drawSprite(im,o,size){
  if(o===player && PLAYER_BATTLESHIP_ART.complete && PLAYER_BATTLESHIP_ART.naturalWidth){
    const _sx=screenX(o.x),_sy=screenY(o.y);
    const _scale=PLAYER_SHIP_SCALE[Math.max(0,Math.min(PLAYER_SHIP_SCALE.length-1,shipTier))];
-   const _base=92;
+   const _base=108;
    const _w=_base*_scale;
    const _h=_w*(PLAYER_BATTLESHIP_ART.naturalHeight/PLAYER_BATTLESHIP_ART.naturalWidth);
    ctx.save();
    ctx.translate(_sx,_sy);
    ctx.rotate(o.a+Math.PI/2);
    ctx.globalAlpha=1;
-   ctx.filter='brightness(1.18) contrast(1.08) saturate(1.10)';
+   ctx.filter='brightness(1.42) contrast(1.12) saturate(1.22) drop-shadow(0 3px 3px rgba(0,0,0,.55))';
    ctx.shadowColor='#7cecff';
    ctx.shadowBlur=8;
    ctx.drawImage(PLAYER_BATTLESHIP_ART,-_w/2,-_h/2,_w,_h);
@@ -633,12 +639,12 @@ function drawSprite(im,o,size){
 }
 function drawWorldBackground(){
  const g=ctx.createLinearGradient(0,0,W,H);
- g.addColorStop(0,'#050c2f');g.addColorStop(.48,'#071b4b');g.addColorStop(1,'#050a24');
+ g.addColorStop(0,'#031c3b');g.addColorStop(.48,'#063f63');g.addColorStop(1,'#03152f');
  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
 
  // Deep-water flowing streaks
  ctx.save();
- ctx.globalAlpha=.16;ctx.strokeStyle='#285c92';ctx.lineWidth=2;
+ ctx.globalAlpha=.24;ctx.strokeStyle='#42a6c4';ctx.lineWidth=2;
  for(let wy=Math.floor(camera.y/76)*76;wy<camera.y+H+76;wy+=76){
    const y=wy-camera.y;
    for(let wx=Math.floor(camera.x/150)*150;wx<camera.x+W+180;wx+=150){
@@ -655,8 +661,8 @@ function drawWorldBackground(){
    ctx.save();ctx.translate(x,y);ctx.rotate((n%5-2)*.08);
 
    // murky shallow ring
-   ctx.fillStyle='#4f8c8250';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
-   ctx.strokeStyle='#80afa05c';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
+   ctx.fillStyle='#53d7c268';ctx.beginPath();ctx.ellipse(0,0,i.rx*1.22,i.ry*1.22,0,0,7);ctx.fill();
+   ctx.strokeStyle='#b7f1d97a';ctx.lineWidth=5;ctx.beginPath();ctx.ellipse(0,0,i.rx*1.15,i.ry*1.15,0,0,7);ctx.stroke();
 
    // rugged shoreline
    let pts=[];
@@ -665,16 +671,16 @@ function drawWorldBackground(){
      let noise=1+Math.sin(k*2.17+n)*.08+Math.sin(k*5.3+n*.8)*.045;
      pts.push([Math.cos(a)*i.rx*noise,Math.sin(a)*i.ry*noise]);
    }
-   ctx.fillStyle='#54614a';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
+   ctx.fillStyle='#776b48';ctx.beginPath();pts.forEach((p,k)=>k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fill();
    // inner dark soil/forest floor
-   ctx.fillStyle='#15291f';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
+   ctx.fillStyle='#153822';ctx.beginPath();ctx.ellipse(0,-3,i.rx*.85,i.ry*.78,0,0,7);ctx.fill();
 
    // many dense tree crowns
    for(let k=0;k<52;k++){
      const a=k*2.399+n*.6,rr=.08+(k%9)*.085;
      const tx=Math.cos(a)*i.rx*rr,ty=Math.sin(a)*i.ry*rr*.84;
      const r=5+(k%5)*1.8;
-     ctx.fillStyle=k%4===0?'#0b2f23':k%4===1?'#103c29':k%4===2?'#17472d':'#1c5532';
+     ctx.fillStyle=k%4===0?'#0d3d25':k%4===1?'#14552c':k%4===2?'#1d6933':'#28783a';
      ctx.beginPath();ctx.arc(tx,ty,r,0,7);ctx.fill();
    }
 
@@ -862,7 +868,7 @@ function draw(){
  ctx.lineTo(px+Math.cos(player.a)*38,py+Math.sin(player.a)*38);ctx.stroke();
  ctx.restore();
 
- bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=22;ctx.lineWidth=b.heavy?8:4;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
+ bullets.forEach(b=>{if(!visible(b,60))return;let x=screenX(b.x),y=screenY(b.y);ctx.strokeStyle=b.f?'#ffd36b':'#ff713e';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=28;ctx.lineWidth=b.heavy?10:5;ctx.beginPath();ctx.moveTo(x-b.vx*(b.heavy?.055:.035),y-b.vy*(b.heavy?.055:.035));ctx.lineTo(x,y);ctx.stroke();ctx.fillStyle='#fff7b2';ctx.beginPath();ctx.arc(x,y,b.heavy?7:3.5,0,7);ctx.fill()});
  particles.forEach(p=>{if(!visible(p,80))return;let x=screenX(p.x),y=screenY(p.y);ctx.globalAlpha=Math.min(1,p.life/250);ctx.fillStyle=p.c;ctx.shadowColor=p.c;ctx.shadowBlur=18;ctx.beginPath();ctx.arc(x,y,2+Math.min(6,p.life/100),0,7);ctx.fill();ctx.globalAlpha=1});
  floatingTexts.forEach(f=>{
    let x=screenX(f.x),y=screenY(f.y);
