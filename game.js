@@ -3,14 +3,14 @@
 // Safer spawn water, island-aware enemy steering, stronger battle FX, denser sea atmosphere.
 // Fix: player can no longer spawn/stay trapped inside an island.
 // ===== V5.1 FULL ASSET EDITION =====
-const V51_ASSET_PATHS=[
- 'assets/ships/ship_tier_1_wood_boat.png','assets/ships/ship_tier_2_small_sloop.png',
- 'assets/ships/ship_tier_3_medium_frigate.png','assets/ships/ship_tier_4_large_galleon.png',
- 'assets/ships/ship_tier_5_small_gunboat.png','assets/ships/ship_tier_6_medium_destroyer.png',
- 'assets/ships/ship_tier_7_large_battleship.png','assets/ships/ship_tier_8_ultimate_dreadnought.png'
-];
-const V51_ART={};
-V51_ASSET_PATHS.forEach(src=>{const im=new Image();im.src=src;V51_ART[src]=im;});
+// ===== V5.3 SINGLE BATTLESHIP VISUAL =====
+// Player always uses the same battleship image. Upgrades increase its visual size.
+const PLAYER_BATTLESHIP_SRC='assets/ships/player_battleship.png';
+const PLAYER_BATTLESHIP_ART=new Image();
+PLAYER_BATTLESHIP_ART.src=PLAYER_BATTLESHIP_SRC;
+
+// Visual scale by level: Lv1 -> Lv8
+const PLAYER_SHIP_SCALE=[0.50,0.58,0.66,0.74,0.82,0.90,1.00,1.15];
 
 const c=document.querySelector('#c'),ctx=c.getContext('2d');let W,H,DPR;
 const $=s=>document.querySelector(s);
@@ -316,6 +316,7 @@ function drawLaneForces(){
 function resetWave(){
  const spawn=findOpenWaterSpawn();
  player.x=spawn.x;player.y=spawn.y;
+ player.r=13+shipTier*1.25;
  player.speed=SHIPS[shipTier].speed; autoFireRate=SHIPS[shipTier].rate; autoRange=SHIPS[shipTier].range;
  let n=10+Math.min(14,wave*3);
  enemies=[];laneUnits=[];laneSpawnTimer=1;
@@ -563,13 +564,25 @@ function visible(o,pad=180){let x=screenX(o.x),y=screenY(o.y);return x>-pad&&x<W
 function drawSprite(im,o,size){
  const _ambient=typeof ambientShips!=='undefined'&&ambientShips.includes(o);
  const _enemy=o!==player&&!_ambient;
- let _tier=o===player?shipTier:(_enemy?(o.boss?8:Math.min(7,(o.type||1)+2)):3);
- const _src=V51_ASSET_PATHS[Math.max(0,Math.min(7,_tier-1))],_art=V51_ART[_src];
- if(_art&&_art.complete&&_art.naturalWidth){
-   const _sx=screenX(o.x),_sy=screenY(o.y),_w=size*2.15,_h=_w*(_art.naturalHeight/_art.naturalWidth);
-   ctx.save();ctx.translate(_sx,_sy);ctx.rotate(o.a+Math.PI/2);
-   if(_enemy){ctx.globalAlpha=.92;ctx.filter='sepia(.18) saturate(1.12) hue-rotate(330deg)';}
-   ctx.drawImage(_art,-_w/2,-_h/2,_w,_h);ctx.restore();ctx.filter='none';return;
+
+ // Player: one fixed battleship image, enlarged as the ship level rises.
+ if(o===player && PLAYER_BATTLESHIP_ART.complete && PLAYER_BATTLESHIP_ART.naturalWidth){
+   const _sx=screenX(o.x),_sy=screenY(o.y);
+   const _scale=PLAYER_SHIP_SCALE[Math.max(0,Math.min(PLAYER_SHIP_SCALE.length-1,shipTier))];
+   const _base=92;
+   const _w=_base*_scale;
+   const _h=_w*(PLAYER_BATTLESHIP_ART.naturalHeight/PLAYER_BATTLESHIP_ART.naturalWidth);
+   ctx.save();
+   ctx.translate(_sx,_sy);
+   ctx.rotate(o.a+Math.PI/2);
+   ctx.globalAlpha=1;
+   ctx.filter='brightness(1.18) contrast(1.08) saturate(1.10)';
+   ctx.shadowColor='#7cecff';
+   ctx.shadowBlur=8;
+   ctx.drawImage(PLAYER_BATTLESHIP_ART,-_w/2,-_h/2,_w,_h);
+   ctx.restore();
+   ctx.filter='none';
+   return;
  }
 
  const sx=screenX(o.x),sy=screenY(o.y),ambient=ambientShips.includes(o),enemy=o!==player&&!ambient;
@@ -920,6 +933,8 @@ function upgradeShip(){
  const ratio=Math.max(.35,player.hp/player.max);
  player.max=s.hp; player.hp=Math.round(s.hp*ratio);
  player.speed=s.speed; autoFireRate=s.rate; autoRange=s.range;
+ // Slightly increase collision radius as the same battleship grows visually.
+ player.r=13+shipTier*1.25;
  boom(player.x,player.y); updateHUD();
 }
 $('#upgradeShip')?.addEventListener('pointerdown',e=>{e.preventDefault();upgradeShip()});
