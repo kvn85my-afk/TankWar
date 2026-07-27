@@ -178,3 +178,8 @@ html,body,#game,#c{background:#063a72}
  background:linear-gradient(160deg,#0b6680ee,#063b59ee);
  border-color:#c3f7ff77
 }
+
+/* ===== V8 ULTRA CANVAS ===== */
+#c{image-rendering:auto;filter:saturate(1.08) contrast(1.03)}
+#hud{backdrop-filter:blur(2px)}
+#battleInfo{backdrop-filter:blur(4px)}
